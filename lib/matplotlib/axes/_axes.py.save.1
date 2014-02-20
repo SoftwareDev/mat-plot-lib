@@ -1876,50 +1876,9 @@ class Axes(_AxesBase):
             else:
                 return x
 
-        stringList = False
-        intIndexes = []
-        stringIndexes = []   
-        intList = False
-        backupList = left[:]
-        
-        # check if string/int list, default to string list if mixed type
-        if type(left) == type([]):
-            print("Given a list, checking if string array")
-
-            for i in range(len(left)):
-                print(left[i])
-                if isinstance(left[i], str):
-                    stringIndexes.append(i)
-                elif isinstance(left[i], int):
-                    intIndexes.append(i)
-            if len(stringIndexes) and not len(intIndexes):
-                stringList = True
-                # convert list into a new list 
-                left = list(range(1, len(backupList) + 1))                
-            elif len(stringIndexes) and len(intIndexes):
-                stringList = True
-                # convert ints to string
-                for i in intIndexes:
-                    backupList[i] = str(backupList[i])
-                # convert list into a new list 
-                left = list(range(1, len(backupList) + 1))
-            elif not len(stringIndexes) and len(intIndexes):
-                    intList = True
-
-        print(stringIndexes)
-        print(left)
-        print(backupList)
-        print(intList)
-        print(intIndexes)
-    
-            
         # make them safe to take len() of
         _left = left
         left = make_iterable(left)
-
-             
-        
-        
         height = make_iterable(height)
         width = make_iterable(width)
         _bottom = bottom
@@ -2017,7 +1976,6 @@ class Axes(_AxesBase):
         elif align == 'center':
             if orientation == 'vertical':
                 left = [left[i] - width[i] / 2. for i in xrange(len(left))]
-                print(left)
             elif orientation == 'horizontal':
                 bottom = [bottom[i] - height[i] / 2.
                           for i in xrange(len(bottom))]
@@ -2087,13 +2045,6 @@ class Axes(_AxesBase):
             ymin = max(ymin * 0.9, 1e-100)
             self.dataLim.intervaly = (ymin, ymax)
         self.autoscale_view()
-
-
-        # fix labels if needed
-        if len(stringIndexes):
-            self.xaxis.set_ticks(list(range(1, len(backupList) + 1)))
-            self.xaxis.set_ticklabels(backupList)
-            
 
         bar_container = BarContainer(patches, errorbar, label=label)
         self.add_container(bar_container)

@@ -2221,3 +2221,4 @@ class YAxis(Axis):
                 self.axes.dataLim.intervaly = ymin, ymax
             if not viewMutated:
                 self.axes.viewLim.intervaly = ymin, ymax
+                                                                                
