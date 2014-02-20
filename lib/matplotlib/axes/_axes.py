@@ -1770,8 +1770,10 @@ class Axes(_AxesBase):
 
         Parameters
         ----------
-        left : sequence of scalars
-            the x coordinates of the left sides of the bars
+        left : sequence of scalars or strings
+            if sequence is entirely scalars then: left is the x coordinates of the left sides of the bars;
+            if sequence is entirely strings or mixed types: left is the labels for the x coordinates and
+            the x coordinates are simply 1 through the number of of elements in the list
 
         height : sequence of scalars
             the heights of the bars
@@ -1876,50 +1878,32 @@ class Axes(_AxesBase):
             else:
                 return x
 
-        stringList = False
         intIndexes = []
         stringIndexes = []   
-        intList = False
+        # create copy of incoming list
         backupList = left[:]
         
-        # check if string/int list, default to string list if mixed type
-        if type(left) == type([]):
-            print("Given a list, checking if string array")
-
+        # check if user gave string/int list, default to string list if mixed types
+        if isinstance(left, []):
             for i in range(len(left)):
-                print(left[i])
                 if isinstance(left[i], str):
                     stringIndexes.append(i)
                 elif isinstance(left[i], int):
                     intIndexes.append(i)
             if len(stringIndexes) and not len(intIndexes):
-                stringList = True
-                # convert list into a new list 
+                # make left refer to a sequence of scalars
                 left = list(range(1, len(backupList) + 1))                
             elif len(stringIndexes) and len(intIndexes):
-                stringList = True
                 # convert ints to string
                 for i in intIndexes:
                     backupList[i] = str(backupList[i])
-                # convert list into a new list 
+                # make left refer to a sequence of scalars
                 left = list(range(1, len(backupList) + 1))
-            elif not len(stringIndexes) and len(intIndexes):
-                    intList = True
 
-        print(stringIndexes)
-        print(left)
-        print(backupList)
-        print(intList)
-        print(intIndexes)
-    
-            
         # make them safe to take len() of
         _left = left
         left = make_iterable(left)
 
-             
-        
-        
         height = make_iterable(height)
         width = make_iterable(width)
         _bottom = bottom
@@ -2089,7 +2073,7 @@ class Axes(_AxesBase):
         self.autoscale_view()
 
 
-        # fix labels if needed
+        # fix labels if needed for custom xaxis labels
         if len(stringIndexes):
             self.xaxis.set_ticks(list(range(1, len(backupList) + 1)))
             self.xaxis.set_ticklabels(backupList)
