@@ -1884,7 +1884,7 @@ class Axes(_AxesBase):
         backupList = left[:]
         
         # check if user gave string/int list, default to string list if mixed types
-        if isinstance(left, []):
+        if isinstance(left, list):
             for i in range(len(left)):
                 if isinstance(left[i], str):
                     stringIndexes.append(i)
