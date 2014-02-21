@@ -1909,10 +1909,12 @@ class Axes(_AxesBase):
             # must normalize sequence input for bar function call
             result = normalize_sequence(backupLeft, left)
             backupLeft = result[0]
+            left = result[1]
         else:
             # create copy of incoming list
-            normalize_sequence(backupBottom, bottom)
-            backupBottom = result[1]
+            result = normalize_sequence(backupBottom, bottom)
+            backupBottom = result[0]
+            bottom = result[1]
                 
         # make them safe to take len() of
         _left = left
