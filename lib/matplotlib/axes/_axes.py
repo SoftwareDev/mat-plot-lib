@@ -1891,7 +1891,7 @@ class Axes(_AxesBase):
             for i in range(len(raw)):
                 if isinstance(raw[i], str):
                     stringIndexes.append(i)
-                elif isinstance(raw[i], int):
+                elif isinstance(raw[i], int) or:
                     intIndexes.append(i)
             if len(stringIndexes) and not len(intIndexes):
                 # make raw refer to a sequence of scalars
@@ -2194,8 +2194,6 @@ class Axes(_AxesBase):
         bar: Plot a vertical bar plot.
         """
         
-        print(bottom)
-        print(width)
         patches = self.bar(left=left, height=height, width=width,
                            bottom=bottom, orientation='horizontal', **kwargs)
         return patches
