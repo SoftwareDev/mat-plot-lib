@@ -1883,41 +1883,33 @@ class Axes(_AxesBase):
         backupLeft = None
         backupBottom = None
         
+        # determine if a list has mixed types; if so make them all string elements
+        # save a backup for use later
+        def normalize_sequence(backup, raw):
+            # create copy of incoming list
+            backup = raw[:]
+            for i in range(len(raw)):
+                if isinstance(raw[i], str):
+                    stringIndexes.append(i)
+                elif isinstance(raw[i], int):
+                    intIndexes.append(i)
+            if len(stringIndexes) and not len(intIndexes):
+                # make raw refer to a sequence of scalars
+                raw = list(range(1, len(backup) + 1))                
+            elif len(stringIndexes) and len(intIndexes):
+                # convert ints to string
+                for i in intIndexes:
+                    backup[i] = str(backup[i])
+                # make raw refer to a sequence of scalars
+                raw = list(range(1, len(backup) + 1))
+
         # check if user gave string/int list, default to string list if mixed types
         if isinstance(left, list):
-            # create copy of incoming list
-            backupLeft = left[:]
-            for i in range(len(left)):
-                if isinstance(left[i], str):
-                    stringIndexes.append(i)
-                elif isinstance(left[i], int):
-                    intIndexes.append(i)
-            if len(stringIndexes) and not len(intIndexes):
-                # make left refer to a sequence of scalars
-                left = list(range(1, len(backupLeft) + 1))                
-            elif len(stringIndexes) and len(intIndexes):
-                # convert ints to string
-                for i in intIndexes:
-                    backupLeft[i] = str(backupLeft[i])
-                # make left refer to a sequence of scalars
-                left = list(range(1, len(backupLeft) + 1))
+            # must normalize sequence input for bar function call
+            normalize_sequence(backupLeft, left)
         else:
             # create copy of incoming list
-            backupBottom = bottom[:]
-            for i in range(len(bottom)):
-                if isinstance(bottom[i], str):
-                    stringIndexes.append(i)
-                elif isinstance(bottom[i], int):
-                    intIndexes.append(i)
-            if len(stringIndexes) and not len(intIndexes):
-                # make left refer to a sequence of scalars
-                bottom = list(range(1, len(backupBottom) + 1))                
-            elif len(stringIndexes) and len(intIndexes):
-                # convert ints to string
-                for i in intIndexes:
-                    backupBottom[i] = str(backupBottom[i])
-                # make left refer to a sequence of scalars
-                bottom = list(range(1, len(backupBottom) + 1))
+            normalize_sequence(backupBottom, bottom)
                 
         # make them safe to take len() of
         _left = left
@@ -2100,7 +2092,6 @@ class Axes(_AxesBase):
             self.yaxis.set_ticks(list(range(1, len(backupBottom) + 1)))
             self.yaxis.set_ticklabels(backupBottom)            
             
-
         bar_container = BarContainer(patches, errorbar, label=label)
         self.add_container(bar_container)
 
@@ -2123,6 +2114,9 @@ class Axes(_AxesBase):
         ----------
         bottom : scalar or array-like
             the y coordinate(s) of the bars
+            if sequence is entirely scalars then: bottom is the y coordinates of the of the bars;
+            if sequence is entirely strings or mixed types: bottom is the labels for the y coordinates and
+            the y coordinates are simply 1 through the number of of elements in the list
 
         width : scalar or array-like
             the width(s) of the bars
