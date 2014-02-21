@@ -1902,14 +1902,17 @@ class Axes(_AxesBase):
                     backup[i] = str(backup[i])
                 # make raw refer to a sequence of scalars
                 raw = list(range(1, len(backup) + 1))
+            return (backup, raw)
 
         # check if user gave string/int list, default to string list if mixed types
         if isinstance(left, list):
             # must normalize sequence input for bar function call
-            normalize_sequence(backupLeft, left)
+            result = normalize_sequence(backupLeft, left)
+            backupLeft = result[0]
         else:
             # create copy of incoming list
             normalize_sequence(backupBottom, bottom)
+            backupBottom = result[1]
                 
         # make them safe to take len() of
         _left = left
