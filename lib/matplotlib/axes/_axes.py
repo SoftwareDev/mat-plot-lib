@@ -1880,13 +1880,13 @@ class Axes(_AxesBase):
 
         intIndexes = []
         stringIndexes = []   
-        backupList = None
+        backupLeft = None
         backupBottom = None
         
         # check if user gave string/int list, default to string list if mixed types
         if isinstance(left, list):
             # create copy of incoming list
-            backupList = left[:]
+            backupLeft = left[:]
             for i in range(len(left)):
                 if isinstance(left[i], str):
                     stringIndexes.append(i)
@@ -1894,13 +1894,13 @@ class Axes(_AxesBase):
                     intIndexes.append(i)
             if len(stringIndexes) and not len(intIndexes):
                 # make left refer to a sequence of scalars
-                left = list(range(1, len(backupList) + 1))                
+                left = list(range(1, len(backupLeft) + 1))                
             elif len(stringIndexes) and len(intIndexes):
                 # convert ints to string
                 for i in intIndexes:
-                    backupList[i] = str(backupList[i])
+                    backupLeft[i] = str(backupLeft[i])
                 # make left refer to a sequence of scalars
-                left = list(range(1, len(backupList) + 1))
+                left = list(range(1, len(backupLeft) + 1))
         else:
             # create copy of incoming list
             backupBottom = bottom[:]
@@ -2094,9 +2094,9 @@ class Axes(_AxesBase):
 
         # fix labels if needed for custom xaxis/yaxis labels
         if len(stringIndexes) and backupBottom == None:
-            self.xaxis.set_ticks(list(range(1, len(backupList) + 1)))
-            self.xaxis.set_ticklabels(backupList)
-        elif len(stringIndexes) and backupList == None:
+            self.xaxis.set_ticks(list(range(1, len(backupLeft) + 1)))
+            self.xaxis.set_ticklabels(backupLeft)
+        elif len(stringIndexes) and backupLeft == None:
             self.yaxis.set_ticks(list(range(1, len(backupBottom) + 1)))
             self.yaxis.set_ticklabels(backupBottom)            
             
