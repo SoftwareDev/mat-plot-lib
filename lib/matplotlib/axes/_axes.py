@@ -1880,11 +1880,13 @@ class Axes(_AxesBase):
 
         intIndexes = []
         stringIndexes = []   
-        # create copy of incoming list
-        backupList = left[:]
+        backupList = None
+        backupBottom = None
         
         # check if user gave string/int list, default to string list if mixed types
         if isinstance(left, list):
+            # create copy of incoming list
+            backupList = left[:]
             for i in range(len(left)):
                 if isinstance(left[i], str):
                     stringIndexes.append(i)
@@ -1899,11 +1901,28 @@ class Axes(_AxesBase):
                     backupList[i] = str(backupList[i])
                 # make left refer to a sequence of scalars
                 left = list(range(1, len(backupList) + 1))
-
+        else:
+            # create copy of incoming list
+            backupBottom = bottom[:]
+            for i in range(len(bottom)):
+                if isinstance(bottom[i], str):
+                    stringIndexes.append(i)
+                elif isinstance(bottom[i], int):
+                    intIndexes.append(i)
+            if len(stringIndexes) and not len(intIndexes):
+                # make left refer to a sequence of scalars
+                bottom = list(range(1, len(backupBottom) + 1))                
+            elif len(stringIndexes) and len(intIndexes):
+                # convert ints to string
+                for i in intIndexes:
+                    backupBottom[i] = str(backupBottom[i])
+                # make left refer to a sequence of scalars
+                bottom = list(range(1, len(backupBottom) + 1))
+                
         # make them safe to take len() of
         _left = left
         left = make_iterable(left)
-
+        
         height = make_iterable(height)
         width = make_iterable(width)
         _bottom = bottom
@@ -2073,10 +2092,13 @@ class Axes(_AxesBase):
         self.autoscale_view()
 
 
-        # fix labels if needed for custom xaxis labels
-        if len(stringIndexes):
+        # fix labels if needed for custom xaxis/yaxis labels
+        if len(stringIndexes) and backupBottom == None:
             self.xaxis.set_ticks(list(range(1, len(backupList) + 1)))
             self.xaxis.set_ticklabels(backupList)
+        elif len(stringIndexes) and backupList == None:
+            self.yaxis.set_ticks(list(range(1, len(backupBottom) + 1)))
+            self.yaxis.set_ticklabels(backupBottom)            
             
 
         bar_container = BarContainer(patches, errorbar, label=label)
@@ -2172,7 +2194,9 @@ class Axes(_AxesBase):
         --------
         bar: Plot a vertical bar plot.
         """
-
+        
+        print(bottom)
+        print(width)
         patches = self.bar(left=left, height=height, width=width,
                            bottom=bottom, orientation='horizontal', **kwargs)
         return patches
