@@ -210,25 +210,25 @@ class Axes(_AxesBase):
         return self.yaxis.set_label_text(ylabel, fontdict, **kwargs)
 
     def _get_legend_handles(self, legend_handler_map=None):
-        "return artists that will be used as handles for legend"
+        """
+        Return a generator of artists that can be used as handles in
+        a legend.
+
+        """
         handles_original = (self.lines + self.patches +
                             self.collections + self.containers)
-
-        # collections
         handler_map = mlegend.Legend.get_default_handler_map()
 
         if legend_handler_map is not None:
             handler_map = handler_map.copy()
             handler_map.update(legend_handler_map)
 
-        handles = []
-        for h in handles_original:
-            if h.get_label() == "_nolegend_":  # .startswith('_'):
-                continue
-            if mlegend.Legend.get_legend_handler(handler_map, h):
-                handles.append(h)
+        has_handler = mlegend.Legend.get_legend_handler
 
-        return handles
+        for handle in handles_original:
+            label = handle.get_label()
+            if label != '_nolegend_' and has_handler(handler_map, handle):
+                yield handle
 
     def get_legend_handles_labels(self, legend_handler_map=None):
         """
@@ -240,7 +240,6 @@ class Axes(_AxesBase):
           ax.legend(h, l)
 
         """
-
         handles = []
         labels = []
         for handle in self._get_legend_handles(legend_handler_map):
@@ -253,207 +252,264 @@ class Axes(_AxesBase):
 
     def legend(self, *args, **kwargs):
         """
-        Place a legend on the current axes.
+        Places a legend on the axes.
 
-        Call signature::
+        To make a legend for lines which already exist on the axes
+        (via plot for instance), simply call this function with an iterable
+        of strings, one for each legend item. For example::
 
-           legend(*args, **kwargs)
+            ax.plot([1, 2, 3])
+            ax.legend(['A simple line'])
 
-        Places legend at location *loc*.  Labels are a sequence of
-        strings and *loc* can be a string or an integer specifying the
-        legend location.
+        However, in order to keep the "label" and the legend element
+        instance together, it is preferable to specify the label either at
+        artist creation, or by calling the
+        :meth:`~matplotlib.artist.Artist.set_label` method on the artist::
 
-        To make a legend with existing lines::
+            line, = ax.plot([1, 2, 3], label='Inline label')
+            # Overwrite the label by calling the method.
+            line.set_label('Label via method')
+            ax.legend()
 
-           legend()
+        Specific lines can be excluded from the automatic legend element
+        selection by defining a label starting with an underscore.
+        This is default for all artists, so calling :meth:`legend` without
+        any arguments and without setting the labels manually will result in
+        no legend being drawn.
 
-        :meth:`legend` by itself will try and build a legend using the label
-        property of the lines/patches/collections.  You can set the label of
-        a line by doing::
+        For full control of which artists have a legend entry, it is possible
+        to pass an iterable of legend artists followed by an iterable of
+        legend labels respectively::
 
-           plot(x, y, label='my data')
+           legend((line1, line2, line3), ('label1', 'label2', 'label3'))
 
-        or::
+        Parameters
+        ----------
+        loc : int or string or pair of floats, default: 0
+            The location of the legend. Possible codes are:
 
-           line.set_label('my data').
-
-        If label is set to '_nolegend_', the item will not be shown in
-        legend.
-
-        To automatically generate the legend from labels::
-
-           legend( ('label1', 'label2', 'label3') )
-
-        To make a legend for a list of lines and labels::
-
-           legend( (line1, line2, line3), ('label1', 'label2', 'label3') )
-
-        To make a legend at a given location, using a location argument::
-
-           legend( ('label1', 'label2', 'label3'), loc='upper left')
-
-        or::
-
-           legend((line1, line2, line3), ('label1', 'label2', 'label3'), loc=2)
-
-        The location codes are
-
-          ===============   =============
-          Location String   Location Code
-          ===============   =============
-          'best'            0
-          'upper right'     1
-          'upper left'      2
-          'lower left'      3
-          'lower right'     4
-          'right'           5
-          'center left'     6
-          'center right'    7
-          'lower center'    8
-          'upper center'    9
-          'center'          10
-          ===============   =============
+                ===============   =============
+                Location String   Location Code
+                ===============   =============
+                'best'            0
+                'upper right'     1
+                'upper left'      2
+                'lower left'      3
+                'lower right'     4
+                'right'           5
+                'center left'     6
+                'center right'    7
+                'lower center'    8
+                'upper center'    9
+                'center'          10
+                ===============   =============
 
 
-        Users can specify any arbitrary location for the legend using the
-        *bbox_to_anchor* keyword argument. bbox_to_anchor can be an instance
-        of BboxBase(or its derivatives) or a tuple of 2 or 4 floats.
-        For example::
+            Alternatively can be a 2-tuple giving ``x, y`` of the lower-left
+            corner of the legend in axes coordinates (in which case
+            ``bbox_to_anchor`` will be ignored).
 
-           loc = 'upper right', bbox_to_anchor = (0.5, 0.5)
+        bbox_to_anchor : :class:`matplotlib.transforms.BboxBase` instance \
+                         or tuple of floats
+            Specify any arbitrary location for the legend in `bbox_transform`
+            coordinates (default Axes coordinates).
 
-        will place the legend so that the upper right corner of the legend at
-        the center of the axes.
+            For example, to put the legend's upper right hand corner in the
+            center of the axes the following keywords can be used::
 
-        The legend location can be specified in other coordinate, by using the
-        *bbox_transform* keyword.
+               loc='upper right', bbox_to_anchor=(0.5, 0.5)
 
-        The loc itslef can be a 2-tuple giving x,y of the lower-left corner of
-        the legend in axes coords (*bbox_to_anchor* is ignored).
+        ncol : integer
+            The number of columns that the legend has. Default is 1.
 
-        Keyword arguments:
+        prop : None or :class:`matplotlib.font_manager.FontProperties` or dict
+            The font properties of the legend. If None (default), the current
+            :data:`matplotlib.rcParams` will be used.
 
-          *prop*: [ *None* | FontProperties | dict ]
-            A :class:`matplotlib.font_manager.FontProperties`
-            instance. If *prop* is a dictionary, a new instance will be
-            created with *prop*. If *None*, use rc settings.
+        fontsize : int or float or {'xx-small', 'x-small', 'small', 'medium',\
+                   'large', 'x-large', 'xx-large'}
+            Controls the font size of the legend. If the value is numeric the
+            size will be the absolute font size in points. String values are
+            relative to the current default font size. This argument is only
+            used if `prop` is not specified.
 
-          *fontsize*: [size in points | 'xx-small' | 'x-small' | 'small' |
-                      'medium' | 'large' | 'x-large' | 'xx-large']
-            Set the font size.  May be either a size string, relative to
-            the default font size, or an absolute font size in points. This
-            argument is only used if prop is not specified.
+        numpoints : None or int
+            The number of marker points in the legend when creating a legend
+            entry for a line/:class:`matplotlib.lines.Line2D`.
+            Default is ``None`` which will take the value from the
+            ``legend.numpoints`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *numpoints*: integer
-            The number of points in the legend for line
+        scatterpoints : None or int
+            The number of marker points in the legend when creating a legend
+            entry for a scatter plot/
+            :class:`matplotlib.collections.PathCollection`.
+            Default is ``None`` which will take the value from the
+            ``legend.scatterpoints`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *scatterpoints*: integer
-            The number of points in the legend for scatter plot
+        scatteryoffsets : iterable of floats
+            The vertical offset (relative to the font size) for the markers
+            created for a scatter plot legend entry. 0.0 is at the base the
+            legend text, and 1.0 is at the top. To draw all markers at the
+            same height, set to ``[0.5]``. Default ``[0.375, 0.5, 0.3125]``.
 
-          *scatteryoffsets*: list of floats
-            a list of yoffsets for scatter symbols in legend
+        markerscale : None or int or float
+            The relative size of legend markers compared with the originally
+            drawn ones. Default is ``None`` which will take the value from
+            the ``legend.markerscale`` :data:`rcParam <matplotlib.rcParams>`.
 
-          *markerscale*: [ *None* | scalar ]
-            The relative size of legend markers vs. original. If *None*,
-            use rc settings.
+        frameon : None or bool
+            Control whether a frame should be drawn around the legend.
+            Default is ``None`` which will take the value from the
+            ``legend.frameon`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *frameon*: [ *True* | *False* ]
-            if *True*, draw a frame around the legend.
-            The default is set by the rcParam 'legend.frameon'
+        fancybox : None or bool
+            Control whether round edges should be enabled around
+            the :class:`~matplotlib.patches.FancyBboxPatch` which
+            makes up the legend's background.
+            Default is ``None`` which will take the value from the
+            ``legend.fancybox`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *fancybox*: [ *None* | *False* | *True* ]
-            if *True*, draw a frame with a round fancybox.  If *None*,
-            use rc settings
+        shadow : None or bool
+            Control whether to draw a shadow behind the legend.
+            Default is ``None`` which will take the value from the
+            ``legend.shadow`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *shadow*: [ *None* | *False* | *True* ]
-            If *True*, draw a shadow behind legend. If *None*,
-            use rc settings.
+        framealpha : None or float
+            Control the alpha transparency of the legend's frame.
+            Default is ``None`` which will take the value from the
+            ``legend.framealpha`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *framealpha*: [*None* | float]
-            If not None, alpha channel for legend frame. Default *None*.
+        mode : {"expand", None}
+            If `mode` is set to ``"expand"`` the legend will be horizontally
+            expanded to fill the axes area (or `bbox_to_anchor` if defines
+            the legend's size).
 
-          *ncol* : integer
-            number of columns. default is 1
+        bbox_transform : None or :class:`matplotlib.transforms.Transform`
+            The transform for the bounding box (`bbox_to_anchor`). For a value
+            of ``None`` (default) the Axes'
+            :data:`~matplotlib.axes.Axes.transAxes` transform will be used.
 
-          *mode* : [ "expand" | *None* ]
-            if mode is "expand", the legend will be horizontally expanded
-            to fill the axes area (or *bbox_to_anchor*)
+        title : str or None
+            The legend's title. Default is no title (``None``).
 
-          *bbox_to_anchor*: an instance of BboxBase or a tuple of 2 or 4 floats
-            the bbox that the legend will be anchored.
+        borderpad : float or None
+            The fractional whitespace inside the legend border.
+            Measured in font-size units.
+            Default is ``None`` which will take the value from the
+            ``legend.borderpad`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *bbox_transform* : [ an instance of Transform | *None* ]
-            the transform for the bbox. transAxes if *None*.
+        labelspacing : float or None
+            The vertical space between the legend entries.
+            Measured in font-size units.
+            Default is ``None`` which will take the value from the
+            ``legend.labelspacing`` :data:`rcParam<matplotlib.rcParams>`.
 
-          *title* : string
-            the legend title
+        handlelength : float or None
+            The length of the legend handles.
+            Measured in font-size units.
+            Default is ``None`` which will take the value from the
+            ``legend.handlelength`` :data:`rcParam<matplotlib.rcParams>`.
 
-        Padding and spacing between various elements use following
-        keywords parameters. These values are measure in font-size
-        units. e.g., a fontsize of 10 points and a handlelength=5
-        implies a handlelength of 50 points.  Values from rcParams
-        will be used if None.
+        handletextpad : float or None
+            The pad between the legend handle and text.
+            Measured in font-size units.
+            Default is ``None`` which will take the value from the
+            ``legend.handletextpad`` :data:`rcParam<matplotlib.rcParams>`.
 
-        ================   ====================================================
-        Keyword            Description
-        ================   ====================================================
-        borderpad          the fractional whitespace inside the legend border
-        labelspacing       the vertical space between the legend entries
-        handlelength       the length of the legend handles
-        handletextpad      the pad between the legend handle and text
-        borderaxespad      the pad between the axes and legend border
-        columnspacing      the spacing between columns
-        ================   ====================================================
+        borderaxespad : float or None
+            The pad between the axes and legend border.
+            Measured in font-size units.
+            Default is ``None`` which will take the value from the
+            ``legend.borderaxespad`` :data:`rcParam<matplotlib.rcParams>`.
 
-        .. note::
+        columnspacing : float or None
+            The spacing between columns.
+            Measured in font-size units.
+            Default is ``None`` which will take the value from the
+            ``legend.columnspacing`` :data:`rcParam<matplotlib.rcParams>`.
+
+        handler_map : dict or None
+            The custom dictionary mapping instances or types to a legend
+            handler. This `handler_map` updates the default handler map
+            found at :func:`matplotlib.legend.Legend.get_legend_handler_map`.
+
+        Notes
+        -----
 
            Not all kinds of artist are supported by the legend command.
            See :ref:`plotting-guide-legend` for details.
 
-        **Example:**
+        Examples
+        --------
 
         .. plot:: mpl_examples/api/legend_demo.py
 
-        .. seealso::
-            :ref:`plotting-guide-legend`.
-
         """
+        handlers = kwargs.get('handler_map', {}) or {}
 
-        if len(args) == 0:
-            handles, labels = self.get_legend_handles_labels()
-            if len(handles) == 0:
-                warnings.warn("No labeled objects found. "
+        # Support handles and labels being passed as keywords.
+        handles = kwargs.pop('handles', None)
+        labels = kwargs.pop('labels', None)
+
+        if handles is not None and labels is None:
+            labels = [handle.get_label() for handle in handles]
+            for label, handle in zip(labels[:], handles[:]):
+                if label.startswith('_'):
+                    warnings.warn('The handle {!r} has a label of {!r} which '
+                                  'cannot be automatically added to the '
+                                  'legend.'.format(handle, label))
+                    labels.remove(label)
+                    handles.remove(handle)
+
+        elif labels is not None and handles is None:
+            # Get as many handles as there are labels.
+            handles = [handle for handle, _
+                       in zip(self._get_legend_handles(handlers), labels)]
+
+        # No arguments - automatically detect labels and handles.
+        elif len(args) == 0:
+            handles, labels = self.get_legend_handles_labels(handlers)
+            if not handles:
+                warnings.warn("No labelled objects found. "
                               "Use label='...' kwarg on individual plots.")
                 return None
 
+        # One argument. User defined labels - automatic handle detection.
         elif len(args) == 1:
-            # LABELS
-            labels = args[0]
-            handles = [h for h, label in zip(self._get_legend_handles(),
-                                             labels)]
+            labels, = args
+            # Get as many handles as there are labels.
+            handles = [handle for handle, _
+                       in zip(self._get_legend_handles(handlers), labels)]
 
+        # Two arguments. Either:
+        #   * user defined handles and labels
+        #   * user defined labels and location (deprecated)
         elif len(args) == 2:
             if is_string_like(args[1]) or isinstance(args[1], int):
-                # LABELS, LOC
+                cbook.warn_deprecated('1.4', 'The "loc" positional argument '
+                                      'to legend is deprecated. Please use '
+                                      'the "loc" keyword instead.')
                 labels, loc = args
-                handles = [h for h, label in zip(self._get_legend_handles(),
-                                                 labels)]
+                handles = [handle for handle, _
+                           in zip(self._get_legend_handles(handlers), labels)]
                 kwargs['loc'] = loc
             else:
-                # LINES, LABELS
                 handles, labels = args
 
+        # Three arguments. User defined handles, labels and
+        # location (deprecated).
         elif len(args) == 3:
-            # LINES, LABELS, LOC
+            cbook.warn_deprecated('1.4', 'The "loc" positional argument '
+                                         'to legend is deprecated. Please '
+                                         'use the "loc" keyword instead.')
             handles, labels, loc = args
             kwargs['loc'] = loc
-        else:
-            raise TypeError('Invalid arguments to legend')
 
-        # Why do we need to call "flatten" here? -JJL
-        # handles = cbook.flatten(handles)
+        else:
+            raise TypeError('Invalid arguments to legend.')
 
         self.legend_ = mlegend.Legend(self, handles, labels, **kwargs)
+        self.legend_._remove_method = lambda h: setattr(self, 'legend_', None)
         return self.legend_
 
     def text(self, x, y, s, fontdict=None,
@@ -664,8 +720,7 @@ class Axes(_AxesBase):
         yy = self.convert_yunits(y)
         scaley = (yy < ymin) or (yy > ymax)
 
-        trans = mtransforms.blended_transform_factory(
-            self.transAxes, self.transData)
+        trans = self.get_yaxis_transform(which='grid')
         l = mlines.Line2D([xmin, xmax], [y, y], transform=trans, **kwargs)
         self.add_line(l)
         self.autoscale_view(scalex=False, scaley=scaley)
@@ -731,8 +786,7 @@ class Axes(_AxesBase):
         xx = self.convert_xunits(x)
         scalex = (xx < xmin) or (xx > xmax)
 
-        trans = mtransforms.blended_transform_factory(
-            self.transData, self.transAxes)
+        trans = self.get_xaxis_transform(which='grid')
         l = mlines.Line2D([x, x], [ymin, ymax], transform=trans, **kwargs)
         self.add_line(l)
         self.autoscale_view(scalex=scalex, scaley=False)
@@ -777,8 +831,7 @@ class Axes(_AxesBase):
         .. plot:: mpl_examples/pylab_examples/axhspan_demo.py
 
         """
-        trans = mtransforms.blended_transform_factory(
-            self.transAxes, self.transData)
+        trans = self.get_yaxis_transform(which='grid')
 
         # process the unit information
         self._process_unit_info([xmin, xmax], [ymin, ymax], kwargs=kwargs)
@@ -833,8 +886,7 @@ class Axes(_AxesBase):
             :meth:`axhspan`
                 for example plot and source code
         """
-        trans = mtransforms.blended_transform_factory(
-            self.transData, self.transAxes)
+        trans = self.get_xaxis_transform(which='grid')
 
         # process the unit information
         self._process_unit_info([xmin, xmax], [ymin, ymax], kwargs=kwargs)
@@ -1182,18 +1234,24 @@ class Axes(_AxesBase):
             colls.append(coll)
 
         if len(positions) > 0:
-            minpos = min(position.min() for position in positions)
-            maxpos = max(position.max() for position in positions)
+            # try to get min/max
+            min_max = [(np.min(_p), np.max(_p)) for _p in positions
+                       if len(_p) > 0]
+            # if we have any non-empty positions, try to autoscale
+            if len(min_max) > 0:
+                mins, maxes = zip(*min_max)
+                minpos = np.min(mins)
+                maxpos = np.max(maxes)
 
-            minline = (lineoffsets - linelengths).min()
-            maxline = (lineoffsets + linelengths).max()
+                minline = (lineoffsets - linelengths).min()
+                maxline = (lineoffsets + linelengths).max()
 
-            if colls[0].is_horizontal():
-                corners = (minpos, minline), (maxpos, maxline)
-            else:
-                corners = (minline, minpos), (maxline, maxpos)
-            self.update_datalim(corners)
-            self.autoscale_view()
+                if colls[0].is_horizontal():
+                    corners = (minpos, minline), (maxpos, maxline)
+                else:
+                    corners = (minline, minpos), (maxline, maxpos)
+                self.update_datalim(corners)
+                self.autoscale_view()
 
         return colls
 
@@ -2331,8 +2389,8 @@ class Axes(_AxesBase):
         return stem_container
 
     def pie(self, x, explode=None, labels=None, colors=None,
-            autopct=None, pctdistance=0.6, shadow=False,
-            labeldistance=1.1, startangle=None, radius=None):
+            autopct=None, pctdistance=0.6, shadow=False, labeldistance=1.1,
+            startangle=None, radius=None, counterclock=True):
         r"""
         Plot a pie chart.
 
@@ -2385,6 +2443,9 @@ class Axes(_AxesBase):
 
           *radius*: [ *None* | scalar ]
           The radius of the pie, if *radius* is *None* it will be set to 1.
+
+          *counterclock*: [ *False* | *True* ]
+            Specify fractions direction, clockwise or counterclockwise.
 
         The pie chart will probably look best if the figure and axes are
         square, or the Axes aspect is equal.  e.g.::
@@ -2445,13 +2506,14 @@ class Axes(_AxesBase):
         i = 0
         for frac, label, expl in cbook.safezip(x, labels, explode):
             x, y = center
-            theta2 = theta1 + frac
+            theta2 = (theta1 + frac) if counterclock else (theta1 - frac)
             thetam = 2 * math.pi * 0.5 * (theta1 + theta2)
             x += expl * math.cos(thetam)
             y += expl * math.sin(thetam)
 
-            w = mpatches.Wedge((x, y), radius, 360. * theta1, 360. * theta2,
-                               facecolor=colors[i % len(colors)])
+            w = mpatches.Wedge((x, y), radius, 360. * min(theta1, theta2),
+                            360. * max(theta1, theta2),
+                            facecolor=colors[i % len(colors)])
             slices.append(w)
             self.add_patch(w)
             w.set_label(label)
@@ -2843,15 +2905,21 @@ class Axes(_AxesBase):
 
     def boxplot(self, x, notch=False, sym='b+', vert=True, whis=1.5,
                 positions=None, widths=None, patch_artist=False,
-                bootstrap=None, usermedians=None, conf_intervals=None):
+                bootstrap=None, usermedians=None, conf_intervals=None,
+                meanline=False, showmeans=False, showcaps=True,
+                showbox=True, showfliers=True, boxprops=None, labels=None,
+                flierprops=None, medianprops=None, meanprops=None):
         """
         Make a box and whisker plot.
 
         Call signature::
 
-          boxplot(x, notch=False, sym='+', vert=True, whis=1.5,
+          boxplot(x, notch=False, sym='b+', vert=True, whis=1.5,
                   positions=None, widths=None, patch_artist=False,
-                  bootstrap=None, usermedians=None, conf_intervals=None)
+                  bootstrap=None, usermedians=None, conf_intervals=None,
+                  meanline=False, showmeans=False, showcaps=True,
+                  showbox=True, showfliers=True, boxprops=None, labels=None,
+                  flierprops=None, medianprops=None, meanprops=None)
 
         Make a box and whisker plot for each column of *x* or each
         vector in sequence *x*.  The box extends from the lower to
@@ -2859,29 +2927,38 @@ class Axes(_AxesBase):
         The whiskers extend from the box to show the range of the
         data.  Flier points are those past the end of the whiskers.
 
-        Function Arguments:
+        Parameters
+        ----------
 
-          *x* :
-            Array or a sequence of vectors.
+          x : Array or a sequence of vectors.
+            The input data.
 
-          *notch* : [ False (default) | True ]
-            If False (default), produces a rectangular box plot.
+          notch : bool, default = False
+            If False, produces a rectangular box plot.
             If True, will produce a notched box plot
 
-          *sym* : [ default 'b+' ]
+          sym : str, default = 'b+'
             The default symbol for flier points.
             Enter an empty string ('') if you don't want to show fliers.
 
-          *vert* : [ False | True (default) ]
+          vert : bool, default = False
             If True (default), makes the boxes vertical.
             If False, makes horizontal boxes.
 
-          *whis* : [ default 1.5 ]
-            Defines the length of the whiskers as a function of the inner
-            quartile range.  They extend to the most extreme data point
-            within ( ``whis*(75%-25%)`` ) data range.
+          whis : float, sequence (default = 1.5) or string
+            As a float, determines the reach of the whiskers past the first
+            and third quartiles (e.g., Q3 + whis*IQR, IQR = interquartile
+            range, Q3-Q1). Beyond the whiskers, data are considered outliers
+            and are plotted as individual points. Set this to an unreasonably
+            high value to force the whiskers to show the min and max values.
+            Alternatively, set this to an ascending sequence of percentile
+            (e.g., [5, 95]) to set the whiskers at specific percentiles of
+            the data. Finally, *whis* can be the string 'range' to force the
+            whiskers to the min and max of the data. In the edge case that
+            the 25th and 75th percentiles are equivalent, *whis* will be
+            automatically set to 'range'.
 
-          *bootstrap* : [ *None* (default) | integer ]
+          bootstrap : None (default) or integer
             Specifies whether to bootstrap the confidence intervals
             around the median for notched boxplots. If bootstrap==None,
             no bootstrapping is performed, and notches are calculated
@@ -2891,14 +2968,14 @@ class Axes(_AxesBase):
             bootstrap the median to determine it's 95% confidence intervals.
             Values between 1000 and 10000 are recommended.
 
-          *usermedians* : [ default None ]
+          usermedians : array-like or None (default)
             An array or sequence whose first dimension (or length) is
             compatible with *x*. This overrides the medians computed by
             matplotlib for each element of *usermedians* that is not None.
             When an element of *usermedians* == None, the median will be
-            computed directly as normal.
+            computed by matplotlib as normal.
 
-          *conf_intervals* : [ default None ]
+          conf_intervals : array-like or None (default)
             Array or sequence whose first dimension (or length) is compatible
             with *x* and whose second dimension is 2. When the current element
             of *conf_intervals* is not None, the notch locations computed by
@@ -2906,20 +2983,216 @@ class Axes(_AxesBase):
             element of *conf_intervals* is None, boxplot compute notches the
             method specified by the other kwargs (e.g., *bootstrap*).
 
-          *positions* : [ default 1,2,...,n ]
-            Sets the horizontal positions of the boxes. The ticks and limits
+          positions : array-like, default = [1, 2, ..., n]
+            Sets the positions of the boxes. The ticks and limits
             are automatically set to match the positions.
 
-          *widths* : [ default 0.5 ]
+          widths : array-like, default = 0.5
             Either a scalar or a vector and sets the width of each box. The
             default is 0.5, or ``0.15*(distance between extreme positions)``
             if that is smaller.
 
-          *patch_artist* : [ False (default) | True ]
+          labels : sequence or None (default)
+                Labels for each dataset. Length must be compatible with
+                dimensions  of *x*
+
+          patch_artist : bool, default = False
             If False produces boxes with the Line2D artist
             If True produces boxes with the Patch artist
 
-        Returns a dictionary mapping each component of the boxplot
+          showmeans : bool, default = False
+            If True, will toggle one the rendering of the means
+
+          showcaps : bool, default = True
+            If True, will toggle one the rendering of the caps
+
+          showbox : bool, default = True
+            If True, will toggle one the rendering of box
+
+          showfliers : bool, default = True
+            If True, will toggle one the rendering of the fliers
+
+          boxprops : dict or None (default)
+            If provided, will set the plotting style of the boxes
+
+          flierprops : dict or None (default)
+            If provided, will set the plotting style of the fliers
+
+          medianprops : dict or None (default)
+            If provided, will set the plotting style of the medians
+
+          meanprops : dict or None (default)
+            If provided, will set the plotting style of the means
+
+          meanline : bool, default = False
+            If True (and *showmeans* is True), will try to render the mean
+            as a line spanning the full width of the box according to
+            *meanprops*. Not recommended if *shownotches* is also True.
+            Otherwise, means will be shown as points.
+
+        Returns
+        -------
+
+        A dictionary mapping each component of the boxplot
+        to a list of the :class:`matplotlib.lines.Line2D`
+        instances created. That dictionary has the following keys
+        (assuming vertical boxplots):
+
+            - boxes: the main body of the boxplot showing the quartiles
+              and the median's confidence intervals if enabled.
+            - medians: horizonal lines at the median of each box.
+            - whiskers: the vertical lines extending to the most extreme,
+              n-outlier data points.
+            - caps: the horizontal lines at the ends of the whiskers.
+            - fliers: points representing data that extend beyond the
+              whiskers (outliers).
+            - means: points or lines representing the means.
+
+        Examples
+        --------
+
+        .. plot:: mpl_examples/statistics/boxplot_demo.py
+        """
+        bxpstats = cbook.boxplot_stats(x, whis=whis, bootstrap=bootstrap,
+                                       labels=labels)
+        if sym == 'b+' and flierprops is None:
+            flierprops = dict(linestyle='none', marker='+',
+                              markeredgecolor='blue')
+
+        # replace medians if necessary:
+        if usermedians is not None:
+            if (len(np.ravel(usermedians)) != len(bxpstats) or
+                np.shape(usermedians)[0] != len(bxpstats)):
+                medmsg = 'usermedians length not compatible with x'
+                raise ValueError(medmsg)
+            else:
+                # reassign medians as necessary
+                for stats, med in zip(bxpstats, usermedians):
+                    if med is not None:
+                        stats['med'] = med
+
+        if conf_intervals is not None:
+            if np.shape(conf_intervals)[0] != len(bxpstats):
+                raise ValueError('conf_intervals length not '
+                                 'compatible with x')
+            else:
+                for stats, ci in zip(bxpstats, conf_intervals):
+                    if ci is not None:
+                        if len(ci) != 2:
+                            raise ValueError('each confidence interval must '
+                                             'have two values')
+                        else:
+                            if ci[0] is not None:
+                                stats['cilo'] = ci[0]
+                            if ci[1] is not None:
+                                stats['cihi'] = ci[1]
+
+        artists = self.bxp(bxpstats, positions=positions, widths=widths,
+                           vert=vert, patch_artist=patch_artist,
+                           shownotches=notch, showmeans=showmeans,
+                           showcaps=showcaps, showbox=showbox,
+                           boxprops=boxprops, flierprops=flierprops,
+                           medianprops=medianprops, meanprops=meanprops,
+                           meanline=meanline, showfliers=showfliers)
+        return artists
+
+    def bxp(self, bxpstats, positions=None, widths=None, vert=True,
+            patch_artist=False, shownotches=False, showmeans=False,
+            showcaps=True, showbox=True, showfliers=True,
+            boxprops=None, flierprops=None, medianprops=None,
+            meanprops=None, meanline=False):
+        """
+        Drawing function for box and whisker plots.
+
+        Call signature::
+
+          bxp(bxpstats, positions=None, widths=None, vert=True,
+              patch_artist=False, shownotches=False, showmeans=False,
+              showcaps=True, showbox=True, showfliers=True,
+              boxprops=None, flierprops=None, medianprops=None,
+              meanprops=None, meanline=False)
+
+        Make a box and whisker plot for each column of *x* or each
+        vector in sequence *x*.  The box extends from the lower to
+        upper quartile values of the data, with a line at the median.
+        The whiskers extend from the box to show the range of the
+        data.  Flier points are those past the end of the whiskers.
+
+        Parameters
+        ----------
+
+          bxpstats : list of dicts
+            A list of dictionaries containing stats for each boxplot.
+            Required keys are:
+              'med' - The median (scalar float).
+              'q1' - The first quartile (25th percentile) (scalar float).
+              'q3' - The first quartile (50th percentile) (scalar float).
+              'whislo' - Lower bound of the lower whisker (scalar float).
+              'whishi' - Upper bound of the upper whisker (scalar float).
+            Optional keys are
+              'mean' - The mean (scalar float). Needed if showmeans=True.
+              'fliers' - Data beyond the whiskers (sequence of floats).
+                Needed if showfliers=True.
+              'cilo' & 'ciho' - Lower and upper confidence intervals about
+                the median. Needed if shownotches=True.
+              'label' - Name of the dataset (string). If available, this
+                will be used a tick label for the boxplot
+
+          positions : array-like, default = [1, 2, ..., n]
+            Sets the positions of the boxes. The ticks and limits
+            are automatically set to match the positions.
+
+          widths : array-like, default = 0.5
+            Either a scalar or a vector and sets the width of each box. The
+            default is 0.5, or ``0.15*(distance between extreme positions)``
+            if that is smaller.
+
+          vert : bool, default = False
+            If True (default), makes the boxes vertical.
+            If False, makes horizontal boxes.
+
+          patch_artist : bool, default = False
+            If False produces boxes with the Line2D artist
+            If True produces boxes with the Patch artist
+
+          shownotches : bool, default = False
+            If False (default), produces a rectangular box plot.
+            If True, will produce a notched box plot
+
+          showmeans : bool, default = False
+            If True, will toggle one the rendering of the means
+
+          showcaps  : bool, default = True
+            If True, will toggle one the rendering of the caps
+
+          showbox  : bool, default = True
+            If True, will toggle one the rendering of box
+
+          showfliers : bool, default = True
+            If True, will toggle one the rendering of the fliers
+
+          boxprops : dict or None (default)
+            If provided, will set the plotting style of the boxes
+
+          flierprops : dict or None (default)
+            If provided, will set the plotting style of the fliers
+
+          medianprops : dict or None (default)
+            If provided, will set the plotting style of the medians
+
+          meanprops : dict or None (default)
+            If provided, will set the plotting style of the means
+
+          meanline : bool, default = False
+            If True (and *showmeans* is True), will try to render the mean
+            as a line spanning the full width of the box according to
+            *meanprops*. Not recommended if *shownotches* is also True.
+            Otherwise, means will be shown as points.
+
+        Returns
+        -------
+
+        A dictionary mapping each component of the boxplot
         to a list of the :class:`matplotlib.lines.Line2D`
         instances created. That dictionary has the following keys
         (assuming vertical boxplots):
@@ -2931,267 +3204,235 @@ class Axes(_AxesBase):
               n-outlier data points.
             - caps: the horizontal lines at the ends of the whiskers.
             - fliers: points representing data that extend beyone the
-              whiskers (outliers).
+              whiskers (fliers).
+            - means: points or lines representing the means.
 
-        **Example:**
+        Examples
+        --------
 
-        .. plot:: pyplots/boxplot_demo.py
+        .. plot:: mpl_examples/statistics/bxp_demo.py
         """
-        def bootstrapMedian(data, N=5000):
-            # determine 95% confidence intervals of the median
-            M = len(data)
-            percentile = [2.5, 97.5]
-            estimate = np.zeros(N)
-            for n in range(N):
-                bsIndex = np.random.random_integers(0, M - 1, M)
-                bsData = data[bsIndex]
-                estimate[n] = mlab.prctile(bsData, 50)
-            CI = mlab.prctile(estimate, percentile)
-            return CI
+        # lists of artists to be output
+        whiskers = []
+        caps = []
+        boxes = []
+        medians = []
+        means = []
+        fliers = []
 
-        def computeConfInterval(data, med, iq, bootstrap):
-            if bootstrap is not None:
-                # Do a bootstrap estimate of notch locations.
-                # get conf. intervals around median
-                CI = bootstrapMedian(data, N=bootstrap)
-                notch_min = CI[0]
-                notch_max = CI[1]
-            else:
-                # Estimate notch locations using Gaussian-based
-                # asymptotic approximation.
-                #
-                # For discussion: McGill, R., Tukey, J.W.,
-                # and Larsen, W.A. (1978) "Variations of
-                # Boxplots", The American Statistician, 32:12-16.
-                N = len(data)
-                notch_min = med - 1.57 * iq / np.sqrt(N)
-                notch_max = med + 1.57 * iq / np.sqrt(N)
-            return notch_min, notch_max
+        # empty list of xticklabels
+        datalabels = []
 
+        # translates between line2D and patch linestyles
+        linestyle_map = {
+            'solid': '-',
+            'dashed': '--',
+            'dashdot': '-.',
+            'dotted': ':'
+        }
+
+        # box properties
+        if patch_artist:
+            final_boxprops = dict(linestyle='solid', edgecolor='black',
+                                  facecolor='white', linewidth=1)
+        else:
+            final_boxprops = dict(linestyle='-', color='black', linewidth=1)
+
+        if boxprops is not None:
+            final_boxprops.update(boxprops)
+
+        # other (cap, whisker) properties
+        if patch_artist:
+            otherprops = dict(
+                linestyle=linestyle_map[final_boxprops['linestyle']],
+                color=final_boxprops['edgecolor'],
+                linewidth=final_boxprops.get('linewidth', 1)
+            )
+        else:
+            otherprops = dict(linestyle=final_boxprops['linestyle'],
+                              color=final_boxprops['color'],
+                              linewidth=final_boxprops.get('linewidth', 1))
+
+        # flier (outlier) properties
+        final_flierprops = dict(linestyle='none', marker='+',
+                                markeredgecolor='blue')
+        if flierprops is not None:
+            final_flierprops.update(flierprops)
+
+        # median line properties
+        final_medianprops = dict(linestyle='-', color='blue')
+        if medianprops is not None:
+            final_medianprops.update(medianprops)
+
+        # mean (line or point) properties
+        if meanline:
+            final_meanprops = dict(linestyle='--', color='red')
+        else:
+            final_meanprops = dict(linestyle='none', markerfacecolor='red',
+                                   marker='s')
+        if meanprops is not None:
+            final_meanprops.update(meanprops)
+
+        def to_vc(xs, ys):
+            # convert arguments to verts and codes
+            verts = []
+            #codes = []
+            for xi, yi in zip(xs, ys):
+                verts.append((xi, yi))
+            verts.append((0, 0))  # ignored
+            codes = [mpath.Path.MOVETO] + \
+                    [mpath.Path.LINETO] * (len(verts) - 2) + \
+                    [mpath.Path.CLOSEPOLY]
+            return verts, codes
+
+        def patch_list(xs, ys, **kwargs):
+            verts, codes = to_vc(xs, ys)
+            path = mpath.Path(verts, codes)
+            patch = mpatches.PathPatch(path, **kwargs)
+            self.add_artist(patch)
+            return [patch]
+
+        # vertical or horizontal plot?
+        if vert:
+            def doplot(*args, **kwargs):
+                return self.plot(*args, **kwargs)
+
+            def dopatch(xs, ys, **kwargs):
+                return patch_list(xs, ys, **kwargs)
+
+        else:
+            def doplot(*args, **kwargs):
+                shuffled = []
+                for i in xrange(0, len(args), 2):
+                    shuffled.extend([args[i + 1], args[i]])
+                return self.plot(*shuffled, **kwargs)
+
+            def dopatch(xs, ys, **kwargs):
+                xs, ys = ys, xs  # flip X, Y
+                return patch_list(xs, ys, **kwargs)
+
+        # input validation
+        N = len(bxpstats)
+        datashape_message = ("List of boxplot statistics and `{0}` "
+                             "values must have same the length")
+        # check position
+        if positions is None:
+            positions = list(xrange(1, N + 1))
+        elif len(positions) != N:
+            raise ValueError(datashape_message.format("positions"))
+
+        # width
+        if widths is None:
+            distance = max(positions) - min(positions)
+            widths = [min(0.15 * max(distance, 1.0), 0.5)] * N
+        elif np.isscalar(widths):
+            widths = [widths] * N
+        elif len(widths) != N:
+            raise ValueError(datashape_message.format("widths"))
+
+        # check and save the `hold` state of the current axes
         if not self._hold:
             self.cla()
         holdStatus = self._hold
-        whiskers, caps, boxes, medians, fliers = [], [], [], [], []
 
-        # convert x to a list of vectors
-        if hasattr(x, 'shape'):
-            if len(x.shape) == 1:
-                if hasattr(x[0], 'shape'):
-                    x = list(x)
+        for pos, width, stats in zip(positions, widths, bxpstats):
+            # try to find a new label
+            datalabels.append(stats.get('label', pos))
+
+            # fliers coords
+            flier_x = np.ones(len(stats['fliers'])) * pos
+            flier_y = stats['fliers']
+
+            # whisker coords
+            whisker_x = np.ones(2) * pos
+            whiskerlo_y = np.array([stats['q1'], stats['whislo']])
+            whiskerhi_y = np.array([stats['q3'], stats['whishi']])
+
+            # cap coords
+            cap_left = pos - width * 0.25
+            cap_right = pos + width * 0.25
+            cap_x = np.array([cap_left, cap_right])
+            cap_lo = np.ones(2) * stats['whislo']
+            cap_hi = np.ones(2) * stats['whishi']
+
+            # box and median coords
+            box_left = pos - width * 0.5
+            box_right = pos + width * 0.5
+            med_y = [stats['med'], stats['med']]
+
+            # notched boxes
+            if shownotches:
+                box_x = [box_left, box_right, box_right, cap_right, box_right,
+                         box_right, box_left, box_left, cap_left, box_left,
+                         box_left]
+                box_y = [stats['q1'], stats['q1'], stats['cilo'],
+                         stats['med'], stats['cihi'], stats['q3'],
+                         stats['q3'], stats['cihi'], stats['med'],
+                         stats['cilo'], stats['q1']]
+                med_x = cap_x
+
+            # plain boxes
+            else:
+                box_x = [box_left, box_right, box_right, box_left, box_left]
+                box_y = [stats['q1'], stats['q1'], stats['q3'], stats['q3'],
+                         stats['q1']]
+                med_x = [box_left, box_right]
+
+            # maybe draw the box:
+            if showbox:
+                if patch_artist:
+                    boxes.extend(dopatch(box_x, box_y, **final_boxprops))
                 else:
-                    x = [x, ]
-            elif len(x.shape) == 2:
-                nr, nc = x.shape
-                if nr == 1:
-                    x = [x]
-                elif nc == 1:
-                    x = [x.ravel()]
+                    boxes.extend(doplot(box_x, box_y, **final_boxprops))
+
+            # draw the whiskers
+            whiskers.extend(doplot(whisker_x, whiskerlo_y, **otherprops))
+            whiskers.extend(doplot(whisker_x, whiskerhi_y, **otherprops))
+
+            # maybe draw the caps:
+            if showcaps:
+                caps.extend(doplot(cap_x, cap_lo, **otherprops))
+                caps.extend(doplot(cap_x, cap_hi, **otherprops))
+
+            # draw the medians
+            medians.extend(doplot(med_x, med_y, **final_medianprops))
+
+            # maybe draw the means
+            if showmeans:
+                if meanline:
+                    means.extend(doplot(
+                        [box_left, box_right], [stats['mean'], stats['mean']],
+                        **final_meanprops
+                    ))
                 else:
-                    x = [x[:, i] for i in xrange(nc)]
-            else:
-                raise ValueError("input x can have no more than 2 dimensions")
-        if not hasattr(x[0], '__len__'):
-            x = [x]
-        col = len(x)
+                    means.extend(doplot(
+                        [pos], [stats['mean']], **final_meanprops
+                    ))
 
-        # sanitize user-input medians
-        msg1 = "usermedians must either be a list/tuple or a 1d array"
-        msg2 = "usermedians' length must be compatible with x"
-        if usermedians is not None:
-            if hasattr(usermedians, 'shape'):
-                if len(usermedians.shape) != 1:
-                    raise ValueError(msg1)
-                elif usermedians.shape[0] != col:
-                    raise ValueError(msg2)
-            elif len(usermedians) != col:
-                raise ValueError(msg2)
-
-        #sanitize user-input confidence intervals
-        msg1 = "conf_intervals must either be a list of tuples or a 2d array"
-        msg2 = "conf_intervals' length must be compatible with x"
-        msg3 = "each conf_interval, if specificied, must have two values"
-        if conf_intervals is not None:
-            if hasattr(conf_intervals, 'shape'):
-                if len(conf_intervals.shape) != 2:
-                    raise ValueError(msg1)
-                elif conf_intervals.shape[0] != col:
-                    raise ValueError(msg2)
-                elif conf_intervals.shape[1] != 2:
-                    raise ValueError(msg3)
-            else:
-                if len(conf_intervals) != col:
-                    raise ValueError(msg2)
-                for ci in conf_intervals:
-                    if ci is not None and len(ci) != 2:
-                        raise ValueError(msg3)
-
-        # get some plot info
-        if positions is None:
-            positions = list(xrange(1, col + 1))
-        if widths is None:
-            distance = max(positions) - min(positions)
-            widths = min(0.15 * max(distance, 1.0), 0.5)
-        if isinstance(widths, float) or isinstance(widths, int):
-            widths = np.ones((col,), float) * widths
-
-        # loop through columns, adding each to plot
-        self.hold(True)
-        for i, pos in enumerate(positions):
-            d = np.ravel(x[i])
-            row = len(d)
-            if row == 0:
-                # no data, skip this position
-                continue
-
-            # get median and quartiles
-            q1, med, q3 = mlab.prctile(d, [25, 50, 75])
-
-            # replace with input medians if available
-            if usermedians is not None:
-                if usermedians[i] is not None:
-                    med = usermedians[i]
-
-            # get high extreme
-            iq = q3 - q1
-            hi_val = q3 + whis * iq
-            wisk_hi = np.compress(d <= hi_val, d)
-            if len(wisk_hi) == 0 or np.max(wisk_hi) < q3:
-                wisk_hi = q3
-            else:
-                wisk_hi = max(wisk_hi)
-
-            # get low extreme
-            lo_val = q1 - whis * iq
-            wisk_lo = np.compress(d >= lo_val, d)
-            if len(wisk_lo) == 0 or np.min(wisk_lo) > q1:
-                wisk_lo = q1
-            else:
-                wisk_lo = min(wisk_lo)
-
-            # get fliers - if we are showing them
-            flier_hi = []
-            flier_lo = []
-            flier_hi_x = []
-            flier_lo_x = []
-            if len(sym) != 0:
-                flier_hi = np.compress(d > wisk_hi, d)
-                flier_lo = np.compress(d < wisk_lo, d)
-                flier_hi_x = np.ones(flier_hi.shape[0]) * pos
-                flier_lo_x = np.ones(flier_lo.shape[0]) * pos
-
-            # get x locations for fliers, whisker, whisker cap and box sides
-            box_x_min = pos - widths[i] * 0.5
-            box_x_max = pos + widths[i] * 0.5
-
-            wisk_x = np.ones(2) * pos
-
-            cap_x_min = pos - widths[i] * 0.25
-            cap_x_max = pos + widths[i] * 0.25
-            cap_x = [cap_x_min, cap_x_max]
-
-            # get y location for median
-            med_y = [med, med]
-
-            # calculate 'notch' plot
-            if notch:
-                # conf. intervals from user, if available
-                if (conf_intervals is not None and
-                    conf_intervals[i] is not None):
-                    notch_max = np.max(conf_intervals[i])
-                    notch_min = np.min(conf_intervals[i])
-                else:
-                    notch_min, notch_max = computeConfInterval(d, med, iq,
-                                                               bootstrap)
-
-                # make our notched box vectors
-                box_x = [box_x_min, box_x_max, box_x_max, cap_x_max, box_x_max,
-                         box_x_max, box_x_min, box_x_min, cap_x_min, box_x_min,
-                         box_x_min]
-                box_y = [q1, q1, notch_min, med, notch_max, q3, q3, notch_max,
-                         med, notch_min, q1]
-                # make our median line vectors
-                med_x = [cap_x_min, cap_x_max]
-                med_y = [med, med]
-            # calculate 'regular' plot
-            else:
-                # make our box vectors
-                box_x = [box_x_min, box_x_max, box_x_max, box_x_min, box_x_min]
-                box_y = [q1, q1, q3, q3, q1]
-                # make our median line vectors
-                med_x = [box_x_min, box_x_max]
-
-            def to_vc(xs, ys):
-                # convert arguments to verts and codes
-                verts = []
-                #codes = []
-                for xi, yi in zip(xs, ys):
-                    verts.append((xi, yi))
-                verts.append((0, 0))  # ignored
-                codes = [mpath.Path.MOVETO] + \
-                        [mpath.Path.LINETO] * (len(verts) - 2) + \
-                        [mpath.Path.CLOSEPOLY]
-                return verts, codes
-
-            def patch_list(xs, ys):
-                verts, codes = to_vc(xs, ys)
-                path = mpath.Path(verts, codes)
-                patch = mpatches.PathPatch(path)
-                self.add_artist(patch)
-                return [patch]
-
-            # vertical or horizontal plot?
-            if vert:
-
-                def doplot(*args):
-                    return self.plot(*args)
-
-                def dopatch(xs, ys):
-                    return patch_list(xs, ys)
-            else:
-
-                def doplot(*args):
-                    shuffled = []
-                    for i in xrange(0, len(args), 3):
-                        shuffled.extend([args[i + 1], args[i], args[i + 2]])
-                    return self.plot(*shuffled)
-
-                def dopatch(xs, ys):
-                    xs, ys = ys, xs  # flip X, Y
-                    return patch_list(xs, ys)
-
-            if patch_artist:
-                median_color = 'k'
-            else:
-                median_color = 'r'
-
-            whiskers.extend(doplot(wisk_x, [q1, wisk_lo], 'b--',
-                                   wisk_x, [q3, wisk_hi], 'b--'))
-            caps.extend(doplot(cap_x, [wisk_hi, wisk_hi], 'k-',
-                               cap_x, [wisk_lo, wisk_lo], 'k-'))
-            if patch_artist:
-                boxes.extend(dopatch(box_x, box_y))
-            else:
-                boxes.extend(doplot(box_x, box_y, 'b-'))
-
-            medians.extend(doplot(med_x, med_y, median_color + '-'))
-            fliers.extend(doplot(flier_hi_x, flier_hi, sym,
-                                 flier_lo_x, flier_lo, sym))
+            # maybe draw the fliers
+            if showfliers:
+                fliers.extend(doplot(flier_x, flier_y, **final_flierprops))
 
         # fix our axes/ticks up a little
         if vert:
-            setticks, setlim = self.set_xticks, self.set_xlim
+            setticks = self.set_xticks
+            setlim = self.set_xlim
+            setlabels = self.set_xticklabels
         else:
-            setticks, setlim = self.set_yticks, self.set_ylim
+            setticks = self.set_yticks
+            setlim = self.set_ylim
+            setlabels = self.set_yticklabels
 
         newlimits = min(positions) - 0.5, max(positions) + 0.5
         setlim(newlimits)
         setticks(positions)
+        setlabels(datalabels)
 
         # reset hold status
         self.hold(holdStatus)
 
         return dict(whiskers=whiskers, caps=caps, boxes=boxes,
-                    medians=medians, fliers=fliers)
+                    medians=medians, fliers=fliers, means=means)
 
     @docstring.dedent_interpd
     def scatter(self, x, y, s=20, c='b', marker='o', cmap=None, norm=None,
@@ -3762,8 +4003,7 @@ class Axes(_AxesBase):
             values.append(val)
 
         values = np.array(values)
-        trans = mtransforms.blended_transform_factory(
-            self.transData, self.transAxes)
+        trans = self.get_xaxis_transform(which='grid')
 
         hbar = mcoll.PolyCollection(verts, transform=trans, edgecolors='face')
 
@@ -3792,8 +4032,7 @@ class Axes(_AxesBase):
 
         values = np.array(values)
 
-        trans = mtransforms.blended_transform_factory(
-            self.transAxes, self.transData)
+        trans = self.get_yaxis_transform(which='grid')
 
         vbar = mcoll.PolyCollection(verts, transform=trans, edgecolors='face')
         vbar.set_array(values)
@@ -3862,8 +4101,8 @@ class Axes(_AxesBase):
         if not self._hold:
             self.cla()
         q = mquiver.Quiver(self, *args, **kw)
-        self.add_collection(q, False)
-        self.update_datalim(q.XY)
+
+        self.add_collection(q, True)
         self.autoscale_view()
         return q
     quiver.__doc__ = mquiver.Quiver.quiver_doc
@@ -3904,7 +4143,6 @@ class Axes(_AxesBase):
             self.cla()
         b = mquiver.Barbs(self, *args, **kw)
         self.add_collection(b)
-        self.update_datalim(b.get_offsets())
         self.autoscale_view()
         return b
 
@@ -4489,6 +4727,9 @@ class Axes(_AxesBase):
           *alpha*: ``0 <= scalar <= 1``   or *None*
             the alpha blending value
 
+          *snap*: bool
+            Whether to snap the mesh to pixel boundaries.
+
         Return value is a :class:`matplotlib.collections.Collection`
         instance.
 
@@ -4637,6 +4878,8 @@ class Axes(_AxesBase):
         if 'antialiaseds' not in kwargs and (is_string_like(ec) and
                 ec.lower() == "none"):
             kwargs['antialiaseds'] = False
+
+        kwargs.setdefault('snap', False)
 
         collection = mcoll.PolyCollection(verts, **kwargs)
 
@@ -5111,7 +5354,7 @@ class Axes(_AxesBase):
             (instead of 1).  If `normed` is True, the weights are normalized,
             so that the integral of the density over the range remains 1.
 
-        cumulative : boolean, optional, default : True
+        cumulative : boolean, optional, default : False
             If `True`, then a histogram is computed where each bin gives the
             counts in that bin plus all bins for smaller values. The last bin
             gives the total number of datapoints.  If `normed` is also `True`
@@ -5462,10 +5705,11 @@ class Axes(_AxesBase):
                 if log:
                     y[y < minimum] = minimum
                 if orientation == 'horizontal':
-                    x, y = y, x
-
-                xvals.append(x.copy())
-                yvals.append(y.copy())
+                    xvals.append(y.copy())
+                    yvals.append(x.copy())
+                else:
+                    xvals.append(x.copy())
+                    yvals.append(y.copy())
 
             if fill:
                 # add patches in reverse order so that when stacking,
@@ -6539,5 +6783,5 @@ class Axes(_AxesBase):
     tripcolor.__doc__ = mtri.tripcolor.__doc__
 
     def triplot(self, *args, **kwargs):
-        mtri.triplot(self, *args, **kwargs)
+        return mtri.triplot(self, *args, **kwargs)
     triplot.__doc__ = mtri.triplot.__doc__

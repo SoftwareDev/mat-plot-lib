@@ -32,6 +32,31 @@ Phil Elson rewrote of the documentation and userguide for both Legend and PathEf
 New plotting features
 ---------------------
 
+Fully customizable boxplots
+````````````````````````````
+Paul Hobson overhauled the :func:`~matplotlib.pyplot.boxplot` method such
+that it is now completely customizable in terms of the styles and positions
+of the individual artists. Under the hood, :func:`~matplotlib.pyplot.boxplot`
+relies on a new function (:func:`~matplotlib.cbook.boxplot_stats`), which
+accepts any data structure currently compatible with
+:func:`~matplotlib.pyplot.boxplot`, and returns a list of dictionaries
+containing the positions for each element of the boxplots. Then
+a second method, :func:`~matplotlib.Axes.bxp` is called to draw the boxplots
+based on the stats.
+
+The :func:~matplotlib.pyplot.boxplot function can be used as before to
+generate boxplots from data in one step. But now the user has the
+flexibility to generate the statistics independently, or to modify the
+output of :func:~matplotlib.cbook.boxplot_stats prior to plotting
+with :func:~matplotlib.Axes.bxp.
+
+Lastly, each artist (e.g., the box, outliers, cap, notches) can now be
+toggled on or off and their styles can be passed in through individual
+kwargs. See the examples:
+:ref:`~examples/statistics/boxplot_demo.py` and
+:ref:`~examples/statistics/bxp_demo.py`
+
+
 Support for datetime axes in 2d plots
 `````````````````````````````````````
 Andrew Dawson added support for datetime axes to
@@ -88,6 +113,24 @@ Added the `kwarg` 'which' to :func:`~matplotlib.Axes.get_xticklabels`,
 'both' select which ticks to return, like
 :func:`~matplotlib.Axis.set_ticks_position`.  If 'which' is `None` then the old
 behaviour (controlled by the bool `minor`).
+
+Separate horizontal/vertical axes padding support in ImageGrid
+``````````````````````````````````````````````````````````````
+The `kwarg` 'axes_pad' to :class:`mpl_toolkits.axes_grid1.ImageGrid` can now
+be a tuple if separate horizontal/vertical padding is needed.
+This is supposed to be very helpful when you have a labelled legend next to
+every subplot and you need to make some space for legend's labels.
+
+Support for skewed transformations
+``````````````````````````````````
+The :class:`~matplotlib.transforms.Affine2D` gained additional methods
+`skew` and `skew_deg` to create skewed transformations. Additionally,
+matplotlib internals were cleaned up to support using such transforms in
+:class:`~matplotlib.Axes`. This transform is important for some plot types,
+specifically the Skew-T used in meteorology.
+
+.. plot:: mpl_examples/api/skewt.py
+
 
 Date handling
 -------------
@@ -149,6 +192,19 @@ added. Furthermore, the the subplottool is now implemented as a modal
 dialog. It was previously a QMainWindow, leaving the SPT open if one closed the
 plotwindow.
 
+Cairo backends
+``````````````
+
+The Cairo backends are now able to use the `cairocffi bindings
+<https://github.com/SimonSapin/cairocffi>`__ which are more actively
+maintained than the `pycairo bindings
+<http://cairographics.org/pycairo/>`__.
+
+Gtk3Agg backend
+```````````````
+
+The Gtk3Agg backend now works on Python 3.x, if the `cairocffi
+bindings <https://github.com/SimonSapin/cairocffi>`__ are installed.
 
 Text
 ----

@@ -457,7 +457,8 @@ class Line2D(Artist):
         if (self.axes and len(x) > 100 and self._is_sorted(x) and
                 self.axes.name == 'rectilinear' and
                 self.axes.get_xscale() == 'linear' and
-                self._markevery is None):
+                self._markevery is None and
+                self.get_clip_on() is True):
             self._subslice = True
         if hasattr(self, '_path'):
             interpolation_steps = self._path._interpolation_steps
@@ -504,7 +505,7 @@ class Line2D(Artist):
         """return true if x is sorted"""
         if len(x) < 2:
             return 1
-        return np.alltrue(x[1:] - x[0:-1] >= 0)
+        return np.amin(x[1:] - x[0:-1]) >= 0
 
     @allow_rasterization
     def draw(self, renderer):
@@ -535,7 +536,7 @@ class Line2D(Artist):
         self._set_gc_clip(gc)
 
         ln_color_rgba = self._get_rgba_ln_color()
-        gc.set_foreground(ln_color_rgba)
+        gc.set_foreground(ln_color_rgba, isRGBA=True)
         gc.set_alpha(ln_color_rgba[3])
 
         gc.set_antialiased(self._antialiased)
@@ -570,7 +571,7 @@ class Line2D(Artist):
             edgecolor = self.get_markeredgecolor()
             if is_string_like(edgecolor) and edgecolor.lower() == 'none':
                 gc.set_linewidth(0)
-                gc.set_foreground(rgbaFace)
+                gc.set_foreground(rgbaFace, isRGBA=True)
             else:
                 gc.set_foreground(edgecolor)
                 gc.set_linewidth(self._markeredgewidth)
@@ -1018,12 +1019,7 @@ class Line2D(Artist):
         return rgbaFace
 
     def _get_rgba_ln_color(self, alt=False):
-        ln_color = self._color
-        if is_string_like(ln_color) and ln_color.lower() == 'none':
-            rgba_ln = None
-        else:
-            rgba_ln = colorConverter.to_rgba(ln_color, self._alpha)
-        return rgba_ln
+        return colorConverter.to_rgba(self._color, self._alpha)
 
     # some aliases....
     def set_aa(self, val):

@@ -30,9 +30,16 @@ import numpy as np
 def _fn_name(): return sys._getframe(1).f_code.co_name
 
 try:
-    import cairo
+    import cairocffi as cairo
 except ImportError:
-    raise ImportError("Cairo backend requires that pycairo is installed.")
+    try:
+        import cairo
+    except ImportError:
+        raise ImportError("Cairo backend requires that cairocffi or pycairo is installed.")
+    else:
+        HAS_CAIRO_CFFI = False
+else:
+    HAS_CAIRO_CFFI = True
 
 _version_required = (1,2,0)
 if cairo.version_info < _version_required:
@@ -170,7 +177,10 @@ class RendererCairo(RendererBase):
 
         ctx.save()
         ctx.set_source_surface (surface, x, y)
-        ctx.paint()
+        if gc.get_alpha() != 1.0:
+            ctx.paint_with_alpha(gc.get_alpha())
+        else:
+            ctx.paint()
         ctx.restore()
 
         im.flipud_out()
@@ -197,8 +207,14 @@ class RendererCairo(RendererBase):
             if angle:
                 ctx.rotate (-angle * np.pi / 180)
             ctx.set_font_size (size)
-            if isinstance(s, six.text_type):
-                s = s.encode("utf-8")
+
+            if HAS_CAIRO_CFFI:
+                if not isinstance(s, six.text_type):
+                    s = six.text_type(s)
+            else:
+                if isinstance(s, six.text_type):
+                    s = s.encode("utf-8")
+
             ctx.show_text(s)
             ctx.restore()
 
@@ -363,8 +379,8 @@ class GraphicsContextCairo(GraphicsContextBase):
         if dashes == None:
             self.ctx.set_dash([], 0)  # switch dashes off
         else:
-            self.ctx.set_dash (
-               self.renderer.points_to_pixels (np.asarray(dashes)), offset)
+            self.ctx.set_dash(
+                list(self.renderer.points_to_pixels(np.asarray(dashes))), offset)
 
 
     def set_foreground(self, fg, isRGBA=None):
@@ -452,17 +468,17 @@ class FigureCanvasCairo (FigureCanvasBase):
                                                  width_in_points)
 
         if format == 'ps':
-            if not cairo.HAS_PS_SURFACE:
+            if not hasattr(cairo, 'PSSurface'):
                 raise RuntimeError ('cairo has not been compiled with PS '
                                     'support enabled')
             surface = cairo.PSSurface (fo, width_in_points, height_in_points)
         elif format == 'pdf':
-            if not cairo.HAS_PDF_SURFACE:
+            if not hasattr(cairo, 'PDFSurface'):
                 raise RuntimeError ('cairo has not been compiled with PDF '
                                     'support enabled')
             surface = cairo.PDFSurface (fo, width_in_points, height_in_points)
         elif format in ('svg', 'svgz'):
-            if not cairo.HAS_SVG_SURFACE:
+            if not hasattr(cairo, 'SVGSurface'):
                 raise RuntimeError ('cairo has not been compiled with SVG '
                                     'support enabled')
             if format == 'svgz':

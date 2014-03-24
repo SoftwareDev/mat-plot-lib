@@ -74,6 +74,17 @@ original location:
   thus `colorbar.ColorbarBase.outline` is now a
   `matplotlib.patches.Polygon` object.
 
+* The legend handler interface has changed from a callable, to any object
+  which implements the ``legend_artists`` method (a deprecation phase will
+  see this interface be maintained for v1.4). See
+  :ref:`plotting-guide-legend` for further details. Further legend changes
+  include:
+
+   * :func:`matplotlib.axes.Axes._get_legend_handles` now returns a generator
+     of handles, rather than a list.
+
+   * The :func:`~matplotlib.pyplot.legend` function's "loc" positional
+     argument has been deprecated. Use the "loc" keyword instead.
 
 * The rcParams `savefig.transparent` has been added to control
   default transparency when saving figures.
@@ -122,6 +133,22 @@ original location:
 
 * Removed the class `FigureManagerQTAgg` and deprecated `NavigationToolbar2QTAgg`
   which will be removed in 1.5.
+
+* The function signatures of `tight_bbox.adjust_bbox` and
+  `tight_bbox.process_figure_for_rasterizing` have been changed. A new
+  `fixed_dpi` parameter allows for overriding the `figure.dpi` setting
+  instead of trying to deduce the intended behaviour from the file format.
+
+* Added support for horizontal/vertical axes padding to
+  `mpl_toolkits.axes_grid1.ImageGrid` --- argument ``axes_pad`` can now be
+  tuple-like if separate axis padding is required.
+  The original behavior is preserved.
+
+* Added support for skewed transforms to `matplotlib.transforms.Affine2D`,
+  which can be created using the `skew` and `skew_deg` methods.
+
+* Added clockwise parameter to control sectors direction in `axes.pie`
+
 
 .. _changes_in_1_3:
 

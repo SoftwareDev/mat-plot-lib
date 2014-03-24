@@ -22,7 +22,7 @@ except ValueError:
         "to be installed.")
 
 try:
-    from gi.repository import Gtk, Gdk, GObject
+    from gi.repository import Gtk, Gdk, GObject, GLib
 except ImportError:
     raise ImportError("Gtk3 backend requires pygobject to be installed.")
 
@@ -92,11 +92,11 @@ class TimerGTK3(TimerBase):
         # Need to stop it, otherwise we potentially leak a timer id that will
         # never be stopped.
         self._timer_stop()
-        self._timer = GObject.timeout_add(self._interval, self._on_timer)
+        self._timer = GLib.timeout_add(self._interval, self._on_timer)
 
     def _timer_stop(self):
         if self._timer is not None:
-            GObject.source_remove(self._timer)
+            GLib.source_remove(self._timer)
             self._timer = None
 
     def _timer_set_interval(self):
@@ -178,7 +178,8 @@ class FigureCanvasGTK3 (Gtk.DrawingArea, FigureCanvasBase):
                   Gdk.EventMask.ENTER_NOTIFY_MASK   |
                   Gdk.EventMask.LEAVE_NOTIFY_MASK   |
                   Gdk.EventMask.POINTER_MOTION_MASK |
-                  Gdk.EventMask.POINTER_MOTION_HINT_MASK)
+                  Gdk.EventMask.POINTER_MOTION_HINT_MASK|
+                  Gdk.EventMask.SCROLL_MASK)
 
     def __init__(self, figure):
         if _debug: print('FigureCanvasGTK3.%s' % fn_name())
@@ -199,20 +200,21 @@ class FigureCanvasGTK3 (Gtk.DrawingArea, FigureCanvasBase):
         self.connect('motion_notify_event',  self.motion_notify_event)
         self.connect('leave_notify_event',   self.leave_notify_event)
         self.connect('enter_notify_event',   self.enter_notify_event)
+        self.connect('size_allocate',        self.size_allocate)
 
         self.set_events(self.__class__.event_mask)
 
         self.set_double_buffered(True)
         self.set_can_focus(True)
         self._renderer_init()
-        self._idle_event_id = GObject.idle_add(self.idle_event)
+        self._idle_event_id = GLib.idle_add(self.idle_event)
 
     def destroy(self):
         #Gtk.DrawingArea.destroy(self)
         self.close_event()
-        GObject.source_remove(self._idle_event_id)
+        GLib.source_remove(self._idle_event_id)
         if self._idle_draw_id != 0:
-            GObject.source_remove(self._idle_draw_id)
+            GLib.source_remove(self._idle_draw_id)
 
     def scroll_event(self, widget, event):
         if _debug: print('FigureCanvasGTK3.%s' % fn_name())
@@ -274,6 +276,17 @@ class FigureCanvasGTK3 (Gtk.DrawingArea, FigureCanvasBase):
     def enter_notify_event(self, widget, event):
         FigureCanvasBase.enter_notify_event(self, event)
 
+    def size_allocate(self, widget, allocation):
+        if _debug:
+            print("FigureCanvasGTK3.%s" % fn_name())
+            print("size_allocate (%d x %d)" % (allocation.width, allocation.height))
+        dpival = self.figure.dpi
+        winch = allocation.width / dpival
+        hinch = allocation.height / dpival
+        self.figure.set_size_inches(winch, hinch)
+        FigureCanvasBase.resize_event(self)
+        self.draw_idle()
+
     def _get_key(self, event):
         if event.keyval in self.keyvald:
             key = self.keyvald[event.keyval]
@@ -328,7 +341,7 @@ class FigureCanvasGTK3 (Gtk.DrawingArea, FigureCanvasBase):
                 self._idle_draw_id = 0
             return False
         if self._idle_draw_id == 0:
-            self._idle_draw_id = GObject.idle_add(idle_draw)
+            self._idle_draw_id = GLib.idle_add(idle_draw)
 
     def new_timer(self, *args, **kwargs):
         """

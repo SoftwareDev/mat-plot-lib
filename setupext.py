@@ -10,6 +10,7 @@ import os
 import re
 import subprocess
 import sys
+import warnings
 from textwrap import fill
 
 
@@ -621,23 +622,40 @@ class Toolkits(OptionalPackage):
 
 class Tests(OptionalPackage):
     name = "tests"
+    nose_min_version = '0.11.1'
 
     def check(self):
         super(Tests, self).check()
 
+        msgs = []
+        msg_template = ('{package} is required to run the matplotlib test '
+                        'suite.  pip/easy_install may attempt to install it '
+                        'after matplotlib.')
+
+
+        bad_nose = msg_template.format(
+            package='nose %s or later' % self.nose_min_version
+        )
         try:
             import nose
+            if is_min_version(nose.__version__, self.nose_min_version):
+                msgs += ['using nose version %s' % nose.__version__]
+            else:
+                msgs += [bad_nose]
         except ImportError:
-            return (
-                "nose 0.11.1 or later is required to run the "
-                "matplotlib test suite")
+            msgs += [bad_nose]
 
-        if nose.__versioninfo__ < (0, 11, 1):
-            return (
-                "nose 0.11.1 or later is required to run the "
-                "matplotlib test suite")
 
-        return 'using nose version %s' % nose.__version__
+        if sys.version_info >= (3, 3):
+            msgs += ['using unittest.mock']
+        else:
+            try:
+                import mock
+                msgs += ['using mock %s' % mock.__version__]
+            except ImportError:
+                msgs += [msg_template.format(package='mock')]
+
+        return ' / '.join(msgs)
 
     def get_packages(self):
         return [
@@ -658,7 +676,10 @@ class Tests(OptionalPackage):
             ]}
 
     def get_install_requires(self):
-        return ['nose']
+        requires = ['nose>=%s' % self.nose_min_version]
+        if not sys.version_info >= (3, 3):
+            requires += ['mock']
+        return requires
 
 
 class DelayedExtension(Extension, object):
@@ -1069,6 +1090,7 @@ class Tri(SetupPackage):
 
 class Six(SetupPackage):
     name = "six"
+    min_version = "1.5"
 
     def check(self):
         try:
@@ -1077,10 +1099,15 @@ class Six(SetupPackage):
             return (
                 "six was not found.")
 
+        if not is_min_version(six.__version__, self.min_version):
+            raise CheckFailed(
+                "Requires six %s or later.  Found %s." %
+                (self.min_version, six.__version__))
+
         return "using six version %s" % six.__version__
 
     def get_install_requires(self):
-        return ['six']
+        return ['six>={0}'.format(self.min_version)]
 
 
 class Dateutil(SetupPackage):
@@ -1679,9 +1706,12 @@ class BackendGtk3Agg(OptionalBackendPackage):
 
 def backend_gtk3cairo_internal_check(x):
     try:
-        import cairo
+        import cairocffi
     except ImportError:
-        return (False, "Requires cairo to be installed.")
+        try:
+            import cairo
+        except ImportError:
+            return (False, "Requires cairocffi or pycairo to be installed.")
 
     try:
         import gi
@@ -1871,11 +1901,16 @@ class BackendCairo(OptionalBackendPackage):
 
     def check_requirements(self):
         try:
-            import cairo
+            import cairocffi
         except ImportError:
-            raise CheckFailed("cairo not found")
+            try:
+                import cairo
+            except ImportError:
+                raise CheckFailed("cairocffi or pycairo not found")
+            else:
+                return "pycairo version %s" % cairo.version
         else:
-            return "version %s" % cairo.version
+            return "cairocffi version %s" % cairocffi.version
 
 
 class DviPng(SetupPackage):

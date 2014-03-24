@@ -1,6 +1,23 @@
+2014-03-17 Bug was fixed in append_axes from the AxesDivider class would not
+           append axes in the right location with respect to the reference
+           locator axes
+
+2014-03-13 Add parameter 'clockwise' to function pie, True by default.
+
+2014-27-02  Implemented separate horizontal/vertical axes padding to the
+           ImageGrid in the AxesGrid toolkit
+
+2014-01-02 `triplot` now returns the artist it adds and support of line and
+           marker kwargs has been improved. GBY
+
 2013-12-30 Made streamplot grid size consistent for different types of density
            argument. A 30x30 grid is now used for both density=1 and
            density=(1, 1).
+
+2013-12-03 Added a pure boxplot-drawing method that allow a more complete
+           customization of boxplots. It takes a list of dicts contains stats.
+           Also created a function (`cbook.boxplot_stats`) that generates the
+           stats needed.
 
 2013-11-28 Added qhull extension module to perform Delaunay triangulation more
            robustly than before.  It is used by tri.Triangulation (and hence

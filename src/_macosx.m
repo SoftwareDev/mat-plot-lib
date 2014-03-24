@@ -1619,6 +1619,8 @@ GraphicsContext_draw_path_collection (GraphicsContext* self, PyObject* args)
                 translation.x = - (origin.x - translation.x);
                 translation.y = - (origin.y - translation.y);
             }
+            /* in case of missing values, translation may contain NaN's */
+            if (!isfinite(translation.x) || !isfinite(translation.y)) continue;
             CGContextTranslateCTM(cr, translation.x, translation.y);
         }
 
@@ -3779,12 +3781,12 @@ static PyMethodDef FigureCanvas_methods[] = {
     },
     {"start_event_loop",
      (PyCFunction)FigureCanvas_start_event_loop,
-     METH_KEYWORDS,
+     METH_KEYWORDS | METH_VARARGS,
      "Runs the event loop until the timeout or until stop_event_loop is called.\n",
     },
     {"stop_event_loop",
      (PyCFunction)FigureCanvas_stop_event_loop,
-     METH_KEYWORDS,
+     METH_NOARGS,
      "Stops the event loop that was started by start_event_loop.\n",
     },
     {NULL}  /* Sentinel */

@@ -901,6 +901,10 @@ class Figure(Artist):
 
         if len(args) == 1 and isinstance(args[0], int):
             args = tuple([int(c) for c in str(args[0])])
+            if len(args) != 3:
+                raise ValueError("Integer subplot specification must " +
+                                 "be a three digit number.  " +
+                                 "Not {n:d}".format(n=len(args)))
 
         if isinstance(args[0], SubplotBase):
 
@@ -1162,6 +1166,7 @@ class Figure(Artist):
         """
         l = Legend(self, handles, labels, *args, **kwargs)
         self.legends.append(l)
+        l._remove_method = lambda h: self.legends.remove(h)
         return l
 
     @docstring.dedent_interpd
