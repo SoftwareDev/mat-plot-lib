@@ -1,13 +1,8 @@
 #!/usr/bin/python
-# axes3d.py, original mplot3d version by John Porter
-# Created: 23 Sep 2005
-# Parts fixed by Reinier Heeres <reinier@heeres.eu>
-# Minor additions by Ben Axelrod <baxelrod@coroware.com>
-# Significant updates and revisions by Ben Root <ben.v.root@gmail.com>
 
 """
-Module containing Axes3D, an object which can plot 3D objects on a
-2D matplotlib figure.
+Module containing Ortho3D, an object which can plot 3D objects on a
+2D matplotlib figure projected orthognally.
 """
 from __future__ import (absolute_import, division, print_function,
                         unicode_literals)
@@ -38,16 +33,16 @@ def unit_bbox():
     box = Bbox(np.array([[0, 0], [1, 1]]))
     return box
 
-class Axes3D(Axes):
+class Ortho3D(Axes):
     """
     3D axes object.
     """
-    name = '3d'
+    name = 'orthogonal'
     _shared_z_axes = cbook.Grouper()
 
     def __init__(self, fig, rect=None, *args, **kwargs):
         '''
-        Build an :class:`Axes3D` instance in
+        Build an :class:`Ortho3D` instance in
         :class:`~matplotlib.figure.Figure` *fig* with
         *rect=[left, bottom, width, height]* in
         :class:`~matplotlib.figure.Figure` coordinates
@@ -96,7 +91,7 @@ class Axes3D(Axes):
                       *args, **kwargs)
         # Disable drawing of axes by base class
         Axes.set_axis_off(self)
-        # Enable drawing of axes by Axes3D class
+        # Enable drawing of axes by Ortho3D class
         self.set_axis_on()
         self.M = None
 
@@ -791,7 +786,7 @@ class Axes3D(Axes):
         %(scale_docs)s
 
         .. note ::
-            Currently, Axes3D objects only supports linear scales.
+            Currently, Ortho3D objects only supports linear scales.
             Other scales may or may not work, and support for these
             is improving with each release.
 
@@ -854,7 +849,7 @@ class Axes3D(Axes):
         See :meth:`matplotlib.axes.Axes.set_yticklabels` for more details.
 
         .. note::
-            Minor ticks are not supported by Axes3D objects.
+            Minor ticks are not supported by Ortho3D objects.
 
         .. versionadded:: 1.1.0
         """
@@ -882,7 +877,7 @@ class Axes3D(Axes):
 
         .. note::
             This function is merely provided for completeness.
-            Axes3D objects do not officially support dates for ticks,
+            Ortho3D objects do not officially support dates for ticks,
             and so this may or may not work as expected.
 
         .. versionadded :: 1.1.0
@@ -917,7 +912,7 @@ class Axes3D(Axes):
         'azim' stores the azimuth angle in the x,y plane.
 
         if elev or azim are None (default), then the initial value
-        is used which was specified in the :class:`Axes3D` constructor.
+        is used which was specified in the :class:`Ortho3D` constructor.
         """
 
         self.dist = 10
@@ -1005,7 +1000,7 @@ class Axes3D(Axes):
             c3 = canv.mpl_connect('button_release_event', self._button_release)
             self._cids = [c1, c2, c3]
         else:
-            warnings.warn('Axes3D.figure.canvas is \'None\', mouse rotation disabled.  Set canvas then call Axes3D.mouse_init().')
+            warnings.warn('Ortho3D.figure.canvas is \'None\', mouse rotation disabled.  Set canvas then call Ortho3D.mouse_init().')
 
         self._rotate_btn = np.atleast_1d(rotate_btn)
         self._zoom_btn = np.atleast_1d(zoom_btn)
@@ -1267,7 +1262,7 @@ class Axes3D(Axes):
 
         See :meth:`matplotlib.axes.Axes.ticklabel_format` for full
         documentation.  Note that this version applies to all three
-        axes of the Axes3D object.  Therefore, the *axis* argument
+        axes of the Ortho3D object.  Therefore, the *axis* argument
         will also accept a value of 'z' and the value of 'both' will
         apply to all three axes.
 
@@ -1328,7 +1323,7 @@ class Axes3D(Axes):
         Convenience method for controlling tick locators.
 
         See :meth:`matplotlib.axes.Axes.locator_params` for full
-        documentation  Note that this is for Axes3D objects,
+        documentation  Note that this is for Ortho3D objects,
         therefore, setting *axis* to 'both' will result in the
         parameters being set for all three axes.  Also, *axis*
         can also take a value of 'z' to apply parameters to the
@@ -1361,14 +1356,14 @@ class Axes3D(Axes):
         the *axis* parameter also accepts a value of 'z', which
         would mean to apply to only the z-axis.
 
-        Also, because of how Axes3D objects are drawn very differently
+        Also, because of how Ortho3D objects are drawn very differently
         from regular 2D axes, some of these settings may have
         ambiguous meaning.  For simplicity, the 'z' axis will
         accept settings as if it was like the 'y' axis.
 
         .. note::
             While this function is currently implemented, the core part
-            of the Axes3D object may ignore some of these settings.
+            of the Ortho3D object may ignore some of these settings.
             Future releases will fix this. Priority will be given to
             those who file bugs.
 
@@ -2432,8 +2427,8 @@ def get_test_data(delta=0.05):
 
 
 ########################################################
-# Register Axes3D as a 'projection' object available
+# Register Ortho3D as a 'projection' object available
 # for use just like any other axes
 ########################################################
 import matplotlib.projections as proj
-proj.projection_registry.register(Axes3D)
+proj.projection_registry.register(Ortho3D)
