@@ -4,3 +4,4 @@ from __future__ import (absolute_import, division, print_function,
 import six
 
 from .axes3d import Axes3D
+from .ortho3d import Ortho3D
