@@ -938,8 +938,6 @@ class Ortho3D(Axes):
         point.
 
         """
-        relev, razim = np.pi * self.elev/180, np.pi * self.azim/180
-
         xmin, xmax = self.get_xlim3d()
         ymin, ymax = self.get_ylim3d()
         zmin, zmax = self.get_zlim3d()
@@ -949,29 +947,11 @@ class Ortho3D(Axes):
                                              ymin, ymax,
                                              zmin, zmax)
 
-        # look into the middle of the new coordinates
-        R = np.array([0.5, 0.5, 0.5])
+        self.eye = None
+        self.vvec = None
 
-        xp = R[0] + np.cos(razim) * np.cos(relev) * self.dist
-        yp = R[1] + np.sin(razim) * np.cos(relev) * self.dist
-        zp = R[2] + np.sin(relev) * self.dist
-        E = np.array((xp, yp, zp))
-
-        self.eye = E
-        self.vvec = R - E
-        self.vvec = self.vvec / proj3d.mod(self.vvec)
-
-        if abs(relev) > np.pi/2:
-            # upside down
-            V = np.array((0, 0, -1))
-        else:
-            V = np.array((0, 0, 1))
-        zfront, zback = -self.dist, self.dist
-
-        viewM = proj3d.view_transformation(E, R, V)
-        perspM = proj3d.persp_transformation(zfront, zback)
-        M0 = np.dot(viewM, worldM)
-        M = np.dot(perspM, M0)
+        orthoM = proj3d.orthogonal_transformation()
+        M = np.dot(orthoM, worldM)
         return M
 
     def mouse_init(self, rotate_btn=1, zoom_btn=3):

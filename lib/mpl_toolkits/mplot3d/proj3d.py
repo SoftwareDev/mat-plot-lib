@@ -145,6 +145,12 @@ def view_transformation(E, R, V):
 
     return np.dot(Mr, Mt)
 
+def orthogonal_transformation():
+    return np.array([[0.10,0,0,-0.050],
+                     [0,0.10,0,-0.050],
+                     [0,0, 1,0],
+                     [0,0,0,1]])
+
 def persp_transformation(zfront, zback):
     a = (zfront+zback)/(zfront-zback)
     b = -2*(zfront*zback)/(zfront-zback)
