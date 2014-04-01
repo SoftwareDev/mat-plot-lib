@@ -938,6 +938,8 @@ class Ortho3D(Axes):
         point.
 
         """
+        relev, razim = np.pi * self.elev/180, np.pi * self.azim/180
+
         xmin, xmax = self.get_xlim3d()
         ymin, ymax = self.get_ylim3d()
         zmin, zmax = self.get_zlim3d()
@@ -950,7 +952,7 @@ class Ortho3D(Axes):
         self.eye = None
         self.vvec = None
 
-        orthoM = proj3d.orthogonal_transformation()
+        orthoM = proj3d.orthogonal_transformation(0.1, (0, -razim, relev))
         M = np.dot(orthoM, worldM)
         return M
 
