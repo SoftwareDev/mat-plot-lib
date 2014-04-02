@@ -1,5 +1,5 @@
 import matplotlib as mpl
-from mpl_toolkits.mplot3d import axes3d
+from mpl_toolkits.mplot3d import axes3d, ortho3d
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -49,7 +49,7 @@ ax5.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
 ax5.view_init(90, 90)
 
 ax6 = fig.add_subplot(gs[1, 2], projection='orthogonal')
-X, Y, Z = axes3d.get_test_data(0.05)
+X, Y, Z = ortho3d.get_test_data(0.05)
 ax6.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
 
 ax4.set_xlabel('X Label')
