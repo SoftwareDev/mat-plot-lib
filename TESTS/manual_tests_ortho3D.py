@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-gs = gridspec.GridSpec(5, 3)
+gs = gridspec.GridSpec(6, 3)
 
 mpl.rcParams['legend.fontsize'] = 10
 
@@ -29,7 +29,7 @@ ax2.plot(x, y, z, label='parametric curve perspective top view')
 ax2.view_init(90, 90)
 ax2.legend()
 
-ax3 = fig.add_subplot(gs[0, 2], projection='3d')
+ax3 = fig.add_subplot(gs[0, 2], projection='orthogonal')
 theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
 z = np.linspace(-2, 2, 100)
 r = z**2 + 1
@@ -48,9 +48,21 @@ X, Y, Z = axes3d.get_test_data(0.05)
 ax5.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
 ax5.view_init(90, 90)
 
-ax6 = fig.add_subplot(gs[1, 2], projection='3d')
+ax6 = fig.add_subplot(gs[1, 2], projection='orthogonal')
 X, Y, Z = axes3d.get_test_data(0.05)
 ax6.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
+
+ax4.set_xlabel('X Label')
+ax4.set_ylabel('Y Label')
+ax4.set_zlabel('Z Label')
+
+ax5.set_xlabel('X Label')
+ax5.set_ylabel('Y Label')
+ax5.set_zlabel('Z Label')
+
+ax6.set_xlabel('X Label')
+ax6.set_ylabel('Y Label')
+ax6.set_zlabel('Z Label')
 
 
 #SURFACE
@@ -67,7 +79,7 @@ ax8 = fig.add_subplot(gs[2, 1], projection='3d')
 ax8.view_init(90, 90)
 ax8.plot_surface(x, y, z,  rstride=4, cstride=4, color='b')
 
-ax9 = fig.add_subplot(gs[2, 2], projection='3d')
+ax9 = fig.add_subplot(gs[2, 2], projection='orthogonal')
 ax9.plot_surface(x, y, z,  rstride=4, cstride=4, color='b')
 
 #TRI SURFACE
@@ -95,7 +107,7 @@ ax10 = fig.add_subplot(gs[3, 1], projection='3d')
 ax10.plot_trisurf(x, y, z, cmap=mpl.cm.jet, linewidth=0.2)
 ax10.view_init(90, 90)
 
-ax11 = fig.add_subplot(gs[3, 2], projection='3d')
+ax11 = fig.add_subplot(gs[3, 2], projection='orthogonal')
 ax11.plot_trisurf(x, y, z, cmap=mpl.cm.jet, linewidth=0.2)
 
 # CONTOUR
@@ -109,8 +121,36 @@ ax13 = fig.add_subplot(gs[4, 1],projection='3d')
 ax13.contourf(X, Y, Z, cmap=mpl.cm.coolwarm)
 ax13.view_init(90, 90)
 
-ax14 = fig.add_subplot(gs[4, 2],projection='3d')
+ax14 = fig.add_subplot(gs[4, 2],projection='orthogonal')
 ax14.contourf(X, Y, Z, cmap=mpl.cm.coolwarm)
+
+# SCATTER PLOTS
+def randrange(n, vmin, vmax):
+    return (vmax-vmin)*np.random.rand(n) + vmin
+n = 100
+
+ax15 = fig.add_subplot(gs[5, 0],projection='3d')
+for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
+    xs = randrange(n, 23, 32)
+    ys = randrange(n, 0, 100)
+    zs = randrange(n, zl, zh)
+    ax15.scatter(xs, ys, zs, c=c, marker=m)
+    
+ax16 = fig.add_subplot(gs[5, 1],projection='3d')
+for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
+    xs = randrange(n, 23, 32)
+    ys = randrange(n, 0, 100)
+    zs = randrange(n, zl, zh)
+    ax16.scatter(xs, ys, zs, c=c, marker=m)
+ax16.view_init(90, 90)
+    
+ax17 = fig.add_subplot(gs[5, 2],projection='orthogonal')
+for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
+    xs = randrange(n, 23, 32)
+    ys = randrange(n, 0, 100)
+    zs = randrange(n, zl, zh)
+    ax17.scatter(xs, ys, zs, c=c, marker=m)
+
 
 plt.tight_layout()
 plt.show()
