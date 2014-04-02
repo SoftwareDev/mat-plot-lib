@@ -146,20 +146,19 @@ def view_transformation(E, R, V):
     return np.dot(Mr, Mt)
 
 def rotation_transformation(yaw, pitch, roll):
-    M_yaw   = np.array([[np.cos(yaw)   , -np.sin(yaw) , 0,              0],
-                        [np.sin(yaw)   ,  np.cos(yaw) , 0,              0],
-                        [0             ,  0           , 1,              0],
-                        [0             ,  0           , 0,              1]])
-    M_pitch = np.array([[1             ,  0           , 0,              0],
-                        [0             ,  np.cos(roll), -np.sin(roll),  0],
-                        [0             ,  np.sin(roll),  np.cos(roll),  0],
-                        [0             ,  0           , 0,              1]])
-    M_roll  = np.array([[np.cos(pitch) ,  0           , np.sin(pitch),  0],
-                        [0             ,  1           , 0,              0],
-                        [-np.sin(pitch),  0           , np.cos(pitch),  0],
-                        [0             ,  0           , 0,              1]])
-    M = np.dot(M_yaw, np.dot(M_pitch, M_roll))
-    return M
+    R_x     = np.array([[1           ,  0            , 0,              0],
+                        [0           ,  np.cos(pitch), -np.sin(pitch), 0],
+                        [0           ,  np.sin(pitch),  np.cos(pitch), 0],
+                        [0           ,  0            , 0,              1]])
+    R_y     = np.array([[np.cos(yaw) ,  0            , np.sin(yaw),    0],
+                        [0           ,  1            , 0,              0],
+                        [-np.sin(yaw),  0            , np.cos(yaw),    0],
+                        [0           ,  0            , 0,              1]])
+    R_z     = np.array([[np.cos(roll), -np.sin(roll) , 0,              0],
+                        [np.sin(roll),  np.cos(roll) , 0,              0],
+                        [0           ,  0            , 1,              0],
+                        [0           ,  0            , 0,              1]])
+    return np.dot(R_x, np.dot(R_y, R_z))
 
 def orthogonal_transformation(scale=0.1, rotation=(0, 0, 0)):
     M_center = np.array([[1,0,0,-0.5],
@@ -167,8 +166,8 @@ def orthogonal_transformation(scale=0.1, rotation=(0, 0, 0)):
                          [0,0,1,-0.5],
                          [0,0,0,1]])
     M_scale  = np.array([[scale,0,0,0],
-                         [0,scale,0,0],
                          [0,0,scale,0],
+                         [0,-scale,0,0],
                          [0,0,0,1]])
     M_rot    = rotation_transformation(*rotation)
     return np.dot(M_rot, np.dot(M_scale, M_center))

@@ -952,7 +952,7 @@ class Ortho3D(Axes):
         self.eye = None
         self.vvec = None
 
-        orthoM = proj3d.orthogonal_transformation(0.1, (0, -razim, relev))
+        orthoM = proj3d.orthogonal_transformation(0.1, (-razim + np.pi*1.5, relev, 0))
         M = np.dot(orthoM, worldM)
         return M
 
