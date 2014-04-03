@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-gs = gridspec.GridSpec(7, 2)
+gs = gridspec.GridSpec(6, 2)
 
 mpl.rcParams['legend.fontsize'] = 10
 
@@ -115,19 +115,6 @@ for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
     zs = randrange(n, zl, zh)
     ax17.scatter(xs, ys, zs, c=c, marker=m)
 
-
-# CUBE
-axa = fig.add_subplot(gs[6, 0], projection='3d')
-r = [-1, 1]
-for s, e in combinations(np.array(list(product(r,r,r))), 2):
-  if np.sum(np.abs(s-e)) == r[1]-r[0]:
-    axa.plot3D(*zip(s,e), color="b")
-
-
-axb = fig.add_subplot(gs[6, 1], projection='orthogonal')
-for s, e in combinations(np.array(list(product(r,r,r))), 2):
-  if np.sum(np.abs(s-e)) == r[1]-r[0]:
-    axb.plot3D(*zip(s,e), color="b")
     
 plt.tight_layout()
 plt.show()
