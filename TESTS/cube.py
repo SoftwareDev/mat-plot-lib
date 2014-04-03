@@ -1,3 +1,8 @@
+#
+# Cube
+#
+
+# Imports
 import matplotlib as mpl
 from mpl_toolkits.mplot3d import axes3d, ortho3d
 import numpy as np
@@ -16,6 +21,9 @@ for s, e in combinations(np.array(list(product(r,r,r))), 2):
     if np.sum(np.abs(s-e)) == r[1]-r[0]:
         ax.plot3D(*zip(s,e), color="b") 
 ax.view_init(0, 0)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 
 ax = fig.add_subplot(gs[0, 1], projection='orthogonal')
 ax.set_aspect("equal")
@@ -25,7 +33,9 @@ for s, e in combinations(np.array(list(product(r,r,r))), 2):
     if np.sum(np.abs(s-e)) == r[1]-r[0]:
         ax.plot3D(*zip(s,e), color="b")
 ax.view_init(0, 0)
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 
 plt.tight_layout()
 plt.show()
-
