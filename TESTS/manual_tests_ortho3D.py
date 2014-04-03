@@ -4,7 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
-gs = gridspec.GridSpec(6, 3)
+gs = gridspec.GridSpec(7, 2)
 
 mpl.rcParams['legend.fontsize'] = 10
 
@@ -19,17 +19,7 @@ y = r * np.cos(theta)
 ax.plot(x, y, z, label='parametric curve perspective projection')
 ax.legend()
 
-ax2 = fig.add_subplot(gs[0, 1], projection='3d')
-theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
-z = np.linspace(-2, 2, 100)
-r = z**2 + 1
-x = r * np.sin(theta)
-y = r * np.cos(theta)
-ax2.plot(x, y, z, label='parametric curve perspective top view')
-ax2.view_init(90, 90)
-ax2.legend()
-
-ax3 = fig.add_subplot(gs[0, 2], projection='orthogonal')
+ax3 = fig.add_subplot(gs[0, 1], projection='orthogonal')
 theta = np.linspace(-4 * np.pi, 4 * np.pi, 100)
 z = np.linspace(-2, 2, 100)
 r = z**2 + 1
@@ -38,27 +28,31 @@ y = r * np.cos(theta)
 ax3.plot(x, y, z, label='parametric curve orthogonal projection')
 ax3.legend()
 
+# CUBE
+axa = fig.add_subplot(gs[0, 0], projection='3d')
+r = [-1, 1]
+for s, e in combinations(np.array(list(product(r,r,r))), 2):
+  if np.sum(np.abs(s-e)) == r[1]-r[0]:
+    axa.plot3D(*zip(s,e), color="b")
+
+
+axb = fig.add_subplot(gs[0, 1], projection='orthogonal')
+for s, e in combinations(np.array(list(product(r,r,r))), 2):
+  if np.sum(np.abs(s-e)) == r[1]-r[0]:
+    axb.plot3D(*zip(s,e), color="b")
+
 # WIREFRAME
 ax4 = fig.add_subplot(gs[1, 0], projection='3d')
 X, Y, Z = axes3d.get_test_data(0.05)
 ax4.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
 
-ax5 = fig.add_subplot(gs[1, 1], projection='3d')
-X, Y, Z = axes3d.get_test_data(0.05)
-ax5.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
-ax5.view_init(90, 90)
-
-ax6 = fig.add_subplot(gs[1, 2], projection='orthogonal')
+ax6 = fig.add_subplot(gs[1, 1], projection='orthogonal')
 X, Y, Z = ortho3d.get_test_data(0.05)
 ax6.plot_wireframe(X, Y, Z, rstride=10, cstride=10)
 
 ax4.set_xlabel('X Label')
 ax4.set_ylabel('Y Label')
 ax4.set_zlabel('Z Label')
-
-ax5.set_xlabel('X Label')
-ax5.set_ylabel('Y Label')
-ax5.set_zlabel('Z Label')
 
 ax6.set_xlabel('X Label')
 ax6.set_ylabel('Y Label')
@@ -75,11 +69,7 @@ z = 10 * np.outer(np.ones(np.size(u)), np.cos(v))
 ax7 = fig.add_subplot(gs[2, 0], projection='3d')
 ax7.plot_surface(x, y, z,  rstride=4, cstride=4, color='b')
 
-ax8 = fig.add_subplot(gs[2, 1], projection='3d')
-ax8.view_init(90, 90)
-ax8.plot_surface(x, y, z,  rstride=4, cstride=4, color='b')
-
-ax9 = fig.add_subplot(gs[2, 2], projection='orthogonal')
+ax9 = fig.add_subplot(gs[2, 1], projection='orthogonal')
 ax9.plot_surface(x, y, z,  rstride=4, cstride=4, color='b')
 
 #TRI SURFACE
@@ -103,11 +93,7 @@ z = np.sin(-x*y)
 ax9 = fig.add_subplot(gs[3, 0], projection='3d')
 ax9.plot_trisurf(x, y, z, cmap=mpl.cm.jet, linewidth=0.2)
 
-ax10 = fig.add_subplot(gs[3, 1], projection='3d')
-ax10.plot_trisurf(x, y, z, cmap=mpl.cm.jet, linewidth=0.2)
-ax10.view_init(90, 90)
-
-ax11 = fig.add_subplot(gs[3, 2], projection='orthogonal')
+ax11 = fig.add_subplot(gs[3, 1], projection='orthogonal')
 ax11.plot_trisurf(x, y, z, cmap=mpl.cm.jet, linewidth=0.2)
 
 # CONTOUR
@@ -117,11 +103,8 @@ X, Y, Z = axes3d.get_test_data(0.05)
 ax12 = fig.add_subplot(gs[4, 0],projection='3d')
 ax12.contourf(X, Y, Z, cmap=mpl.cm.coolwarm)
 
-ax13 = fig.add_subplot(gs[4, 1],projection='3d')
-ax13.contourf(X, Y, Z, cmap=mpl.cm.coolwarm)
-ax13.view_init(90, 90)
 
-ax14 = fig.add_subplot(gs[4, 2],projection='orthogonal')
+ax14 = fig.add_subplot(gs[4, 1],projection='orthogonal')
 ax14.contourf(X, Y, Z, cmap=mpl.cm.coolwarm)
 
 # SCATTER PLOTS
@@ -135,16 +118,9 @@ for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
     ys = randrange(n, 0, 100)
     zs = randrange(n, zl, zh)
     ax15.scatter(xs, ys, zs, c=c, marker=m)
+
     
-ax16 = fig.add_subplot(gs[5, 1],projection='3d')
-for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
-    xs = randrange(n, 23, 32)
-    ys = randrange(n, 0, 100)
-    zs = randrange(n, zl, zh)
-    ax16.scatter(xs, ys, zs, c=c, marker=m)
-ax16.view_init(90, 90)
-    
-ax17 = fig.add_subplot(gs[5, 2],projection='orthogonal')
+ax17 = fig.add_subplot(gs[5, 1],projection='orthogonal')
 for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
     xs = randrange(n, 23, 32)
     ys = randrange(n, 0, 100)
