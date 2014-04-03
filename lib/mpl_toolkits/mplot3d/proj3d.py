@@ -165,9 +165,9 @@ def orthogonal_transformation(scale=0.1, rotation=(0, 0, 0)):
                          [0,1,0,-0.5],
                          [0,0,1,-0.5],
                          [0,0,0,1]])
-    M_scale  = np.array([[scale,0,0,0],
+    M_scale  = np.array([[0,scale,0,0],
                          [0,0,scale,0],
-                         [0,-scale,0,0],
+                         [-scale,0,0,0],
                          [0,0,0,1]])
     M_rot    = rotation_transformation(*rotation)
     return np.dot(M_rot, np.dot(M_scale, M_center))
