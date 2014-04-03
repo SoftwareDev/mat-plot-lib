@@ -28,18 +28,6 @@ y = r * np.cos(theta)
 ax3.plot(x, y, z, label='parametric curve orthogonal projection')
 ax3.legend()
 
-# CUBE
-axa = fig.add_subplot(gs[0, 0], projection='3d')
-r = [-1, 1]
-for s, e in combinations(np.array(list(product(r,r,r))), 2):
-  if np.sum(np.abs(s-e)) == r[1]-r[0]:
-    axa.plot3D(*zip(s,e), color="b")
-
-
-axb = fig.add_subplot(gs[0, 1], projection='orthogonal')
-for s, e in combinations(np.array(list(product(r,r,r))), 2):
-  if np.sum(np.abs(s-e)) == r[1]-r[0]:
-    axb.plot3D(*zip(s,e), color="b")
 
 # WIREFRAME
 ax4 = fig.add_subplot(gs[1, 0], projection='3d')
@@ -128,5 +116,18 @@ for c, m, zl, zh in [('r', 'o', -50, -25), ('b', '^', -30, -5)]:
     ax17.scatter(xs, ys, zs, c=c, marker=m)
 
 
+# CUBE
+axa = fig.add_subplot(gs[6, 0], projection='3d')
+r = [-1, 1]
+for s, e in combinations(np.array(list(product(r,r,r))), 2):
+  if np.sum(np.abs(s-e)) == r[1]-r[0]:
+    axa.plot3D(*zip(s,e), color="b")
+
+
+axb = fig.add_subplot(gs[6, 1], projection='orthogonal')
+for s, e in combinations(np.array(list(product(r,r,r))), 2):
+  if np.sum(np.abs(s-e)) == r[1]-r[0]:
+    axb.plot3D(*zip(s,e), color="b")
+    
 plt.tight_layout()
 plt.show()
